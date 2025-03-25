@@ -7,7 +7,8 @@ Currently, it only supports creating a CA certificate, using an RSA private key,
 ```erlang
 RSAPrivateKey = erl509_private_key:create_rsa(2048).
 Certificate = erl509_certificate:create_self_signed(RSAPrivateKey, <<"example">>).
-ok = file:write_file("example.crt", public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)])).
+PEM = public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
+ok = file:write_file("example.crt", PEM).
 ```
 
 ```
