@@ -1,0 +1,13 @@
+{application, erl509, [
+    {description, "Erlang library for working with X.509 certificates."},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+    ]},
+    {env, []},
+    {modules, []},
+    {licenses, ["BSD-3-Clause"]},
+    {links, []}
+ ]}.
