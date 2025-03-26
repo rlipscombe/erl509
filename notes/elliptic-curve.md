@@ -9,9 +9,8 @@
 BggqhkjOPQMBBw==
 -----END EC PARAMETERS-----
 -----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIOLH4tJzacp16NCSzdT4biLtAYj37t1KUlzp23cqNYaeoAoGCCqGSM49
-AwEHoUQDQgAEDwcHG+FYOTTKh7OGkxjgyLHpZsGVaPRg4xzhHDjbmgR2crG63lLz
-WnhlEY4/jcNNQuo2ACOHUJ8aeTrpj/RKfQ==
+MH...
+...RKfQ==
 -----END EC PRIVATE KEY-----
 ```
 
@@ -24,8 +23,7 @@ WnhlEY4/jcNNQuo2ACOHUJ8aeTrpj/RKfQ==
 [{namedCurve,{1,2,840,10045,3,1,7}},
  #'ECPrivateKey'{version = 1,
                  privateKey = <<226,199,226,210,115,105,202,117,232,208,
-                                146,205,212,248,110,34,237,1,136,247,238,
-                                221,74,82,...>>,
+                                146,205,212,...>>,
                  parameters = {namedCurve,{1,2,840,10045,3,1,7}},
                  publicKey = <<4,15,7,7,27,225,88,57,52,202,135,179,134,
                                147,24,224,200,177,233,102,193,149,...>>,
@@ -38,8 +36,8 @@ WnhlEY4/jcNNQuo2ACOHUJ8aeTrpj/RKfQ==
 % openssl ec -in ec.key -pubout -out ec.pub
 % cat ec.pub
 -----BEGIN PUBLIC KEY-----
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDwcHG+FYOTTKh7OGkxjgyLHpZsGV
-aPRg4xzhHDjbmgR2crG63lLzWnhlEY4/jcNNQuo2ACOHUJ8aeTrpj/RKfQ==
+MF...
+...RKfQ==
 -----END PUBLIC KEY-----
 ```
 
@@ -47,7 +45,7 @@ aPRg4xzhHDjbmgR2crG63lLzWnhlEY4/jcNNQuo2ACOHUJ8aeTrpj/RKfQ==
 1> rr(public_key).
 [...]
 2> {ok, Pub} = file:read_file("ec.pub").
-{ok,<<"-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDwcHG+FYOTTKh7OGkxjgyLHpZsGV\naPRg4xzhHDjbmgR2"...>>}
+{ok,<<"-----BEGIN PUBLIC KEY-----\nMFkwEwYH"...>>}
 3> [public_key:pem_entry_decode(E) || E <- public_key:pem_decode(Pub)].
 [{#'ECPoint'{point = <<4,15,7,7,27,225,88,57,52,202,135,
                        179,134,147,24,224,200,177,233,
