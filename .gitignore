@@ -19,3 +19,5 @@ logs
 rebar3.crashdump
 *~
 *.crt
+*.key
+*.pub

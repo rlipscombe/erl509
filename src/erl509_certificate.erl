@@ -1,19 +1,17 @@
 -module(erl509_certificate).
 -export([create_self_signed/2]).
+-export([to_pem/1]).
 
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
 
-create_self_signed(RSAPrivateKey = #'RSAPrivateKey'{}, Subject) when
+create_self_signed(PrivateKey, Subject) when
     is_binary(Subject)
 ->
     % We need a serial number. Random will do for now.
     SerialNumber = rand:uniform(16#7FFF_FFFF_FFFF_FFFF),
 
-    SignatureAlgorithm = #'AlgorithmIdentifier'{
-        algorithm = ?sha256WithRSAEncryption,
-        parameters = ?DER_NULL
-    },
+    SignatureAlgorithm = get_signature_algorithm(PrivateKey),
 
     % It's self-signed, so the issuer and subject are the same.
     Issuer = Subject,
@@ -32,15 +30,12 @@ create_self_signed(RSAPrivateKey = #'RSAPrivateKey'{}, Subject) when
         notAfter = NotAfter
     },
 
-    RSAPublicKey = erl509_private_key:derive_public_key(RSAPrivateKey),
+    PublicKey = erl509_private_key:derive_public_key(PrivateKey),
 
-    SubjectPublicKeyInfo = #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = ?DER_NULL},
-        subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
-    },
+    SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
 
     % The subject key identifier is used by our issued certificates to refer to this certificate.
-    SubjectKeyIdentifier = create_subject_key_identifier(RSAPublicKey),
+    SubjectKeyIdentifier = create_subject_key_identifier(PublicKey),
 
     % These are suitable default extensions for a CA certificate.
     DefaultExtensions = [
@@ -94,7 +89,7 @@ create_self_signed(RSAPrivateKey = #'RSAPrivateKey'{}, Subject) when
     TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
 
     % We're using sha256WithRSAEncryption, so we sign the certificate with this:
-    Signature = public_key:sign(TbsCertificateDer, sha256, RSAPrivateKey),
+    Signature = public_key:sign(TbsCertificateDer, sha256, PrivateKey),
 
     #'Certificate'{
         tbsCertificate = TbsCertificate,
@@ -102,10 +97,40 @@ create_self_signed(RSAPrivateKey = #'RSAPrivateKey'{}, Subject) when
         signature = Signature
     }.
 
-create_subject_key_identifier(RSAPublicKey = #'RSAPublicKey'{}) ->
+get_signature_algorithm(#'RSAPrivateKey'{}) ->
+    #'AlgorithmIdentifier'{
+        algorithm = ?sha256WithRSAEncryption,
+        parameters = ?DER_NULL
+    };
+get_signature_algorithm(#'ECPrivateKey'{}) ->
+    #'AlgorithmIdentifier'{
+        algorithm = ?'ecdsa-with-SHA256',
+        parameters = asn1_NOVALUE
+    }.
+
+create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
+    #'SubjectPublicKeyInfo'{
+        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = ?DER_NULL},
+        subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
+    };
+create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
+    #'SubjectPublicKeyInfo'{
+        algorithm = #'AlgorithmIdentifier'{
+            algorithm = ?'id-ecPublicKey',
+            parameters = public_key:der_encode('EcpkParameters', Parameters)
+        },
+        subjectPublicKey = Point
+    }.
+
+create_subject_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
     % RFC 5280 says "subject key identifiers SHOULD be derived from the public key or a method that generates unique values".
     %
     % It says a common method of doing that is "the 160-bit SHA-1 hash of the value of the BIT STRING subjectPublicKey".
     %
     % So we'll do that.
-    crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey)).
+    crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
+create_subject_key_identifier({#'ECPoint'{point = Point} = _EC, _Parameters}) ->
+    crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
+
+to_pem(#'Certificate'{} = Certificate) ->
+    public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
