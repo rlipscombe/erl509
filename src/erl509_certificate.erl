@@ -1,5 +1,6 @@
 -module(erl509_certificate).
 -export([create_self_signed/2]).
+-export([to_pem/1]).
 
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
@@ -109,3 +110,6 @@ create_subject_key_identifier(RSAPublicKey = #'RSAPublicKey'{}) ->
     %
     % So we'll do that.
     crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey)).
+
+to_pem(#'Certificate'{} = Certificate) ->
+    public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
