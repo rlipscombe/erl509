@@ -109,6 +109,22 @@ ec_test() ->
     ?assertEqual(ECPoint, SubjectPublicKey),
     ok.
 
+serial_number_test() ->
+    ECPrivateKey = erl509_private_key:create_ec(secp256r1),
+    Certificate = erl509_certificate:create_self_signed(ECPrivateKey, <<"example">>, #{
+        serial_number => 12345
+    }),
+
+    OTPCertificate = to_otp(Certificate),
+
+    #'OTPCertificate'{
+        tbsCertificate = #'OTPTBSCertificate'{
+            serialNumber = SerialNumber
+        }
+    } = OTPCertificate,
+    ?assertEqual(12345, SerialNumber),
+    ok.
+
 to_otp(#'Certificate'{} = Certificate) ->
     DER = public_key:der_encode('Certificate', Certificate),
     public_key:pkix_decode_cert(DER, otp).

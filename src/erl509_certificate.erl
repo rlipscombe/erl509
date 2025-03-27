@@ -1,15 +1,23 @@
 -module(erl509_certificate).
--export([create_self_signed/2]).
+-export([
+    create_self_signed/2,
+    create_self_signed/3
+]).
 -export([to_pem/1]).
 
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
 
-create_self_signed(PrivateKey, Subject) when
+create_self_signed(PrivateKey, Subject) ->
+    create_self_signed(PrivateKey, Subject, #{}).
+
+create_self_signed(PrivateKey, Subject, Options0) when
     is_binary(Subject)
 ->
+    Options = apply_default_options(Options0),
+
     % We need a serial number. Random will do for now.
-    SerialNumber = rand:uniform(16#7FFF_FFFF_FFFF_FFFF),
+    SerialNumber = create_serial_number(Options),
 
     SignatureAlgorithm = get_signature_algorithm(PrivateKey),
 
@@ -96,6 +104,15 @@ create_self_signed(PrivateKey, Subject) when
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
     }.
+
+apply_default_options(Options) ->
+    DefaultOptions = #{serial_number => random},
+    maps:merge(DefaultOptions, Options).
+
+create_serial_number(#{serial_number := random} = _Options) ->
+    rand:uniform(16#7FFF_FFFF_FFFF_FFFF);
+create_serial_number(#{serial_number := SerialNumber} = _Options) when is_integer(SerialNumber) ->
+    SerialNumber.
 
 get_signature_algorithm(#'RSAPrivateKey'{}) ->
     #'AlgorithmIdentifier'{
