@@ -8,8 +8,7 @@ rsa_test() ->
     Certificate = erl509_certificate:create_self_signed(RSAPrivateKey, <<"example">>),
     _PEM = erl509_certificate:to_pem(Certificate),
 
-    CertificateDer = public_key:der_encode('Certificate', Certificate),
-    OTPCertificate = public_key:pkix_decode_cert(CertificateDer, otp),
+    OTPCertificate = to_otp(Certificate),
 
     ?assert(pubkey_cert:is_self_signed(OTPCertificate)),
 
@@ -62,8 +61,7 @@ ec_test() ->
     Certificate = erl509_certificate:create_self_signed(ECPrivateKey, <<"example">>),
     _PEM = erl509_certificate:to_pem(Certificate),
 
-    CertificateDer = public_key:der_encode('Certificate', Certificate),
-    OTPCertificate = public_key:pkix_decode_cert(CertificateDer, otp),
+    OTPCertificate = to_otp(Certificate),
 
     ?assert(pubkey_cert:is_self_signed(OTPCertificate)),
 
@@ -110,3 +108,7 @@ ec_test() ->
     {ECPoint, _} = ECPublicKey,
     ?assertEqual(ECPoint, SubjectPublicKey),
     ok.
+
+to_otp(#'Certificate'{} = Certificate) ->
+    DER = public_key:der_encode('Certificate', Certificate),
+    public_key:pkix_decode_cert(DER, otp).
