@@ -45,38 +45,30 @@ create_self_signed(PrivateKey, Subject, Options0) when
     % The subject key identifier is used by our issued certificates to refer to this certificate.
     SubjectKeyIdentifier = create_subject_key_identifier(PublicKey),
 
-    % These are suitable default extensions for a CA certificate.
-    DefaultExtensions = [
-        #'Extension'{
-            extnID = ?'id-ce-keyUsage',
-            critical = true,
-            extnValue = public_key:der_encode('KeyUsage', [
-                digitalSignature, keyEncipherment, keyCertSign
-            ])
-        },
-        #'Extension'{
-            extnID = ?'id-ce-basicConstraints',
-            critical = true,
-            extnValue = public_key:der_encode('BasicConstraints', #'BasicConstraints'{cA = true})
-        },
-        #'Extension'{
-            extnID = ?'id-ce-subjectKeyIdentifier',
-            critical = false,
-            extnValue = public_key:der_encode('SubjectKeyIdentifier', SubjectKeyIdentifier)
-        }
-    ],
+    DefaultExtensions = create_default_extensions(),
+
+    % The subjectKeyIdentifier (and authorityKeyIdentifier) extensions are used (instead of the name) to build the
+    % certificate path.
+    SubjectKeyIdentifierExtension = #'Extension'{
+        extnID = ?'id-ce-subjectKeyIdentifier',
+        critical = false,
+        extnValue = public_key:der_encode('SubjectKeyIdentifier', SubjectKeyIdentifier)
+    },
 
     % For now, we'll add a SAN using the subject name.
     Hostname = Subject,
 
+    SubjectAltNameExtension = #'Extension'{
+        extnID = ?'id-ce-subjectAltName',
+        critical = false,
+        extnValue = public_key:der_encode('SubjectAltName', [{dNSName, Hostname}])
+    },
+
     Extensions =
         DefaultExtensions ++
             [
-                #'Extension'{
-                    extnID = ?'id-ce-subjectAltName',
-                    critical = false,
-                    extnValue = public_key:der_encode('SubjectAltName', [{dNSName, Hostname}])
-                }
+                SubjectKeyIdentifierExtension,
+                SubjectAltNameExtension
             ],
 
     % Create the certificate entity. It's a TBSCertificate.
@@ -148,6 +140,23 @@ create_subject_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
     crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
 create_subject_key_identifier({#'ECPoint'{point = Point} = _EC, _Parameters}) ->
     crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
+
+% These are suitable default extensions for a CA certificate.
+create_default_extensions() ->
+    [
+        #'Extension'{
+            extnID = ?'id-ce-keyUsage',
+            critical = true,
+            extnValue = public_key:der_encode('KeyUsage', [
+                digitalSignature, keyEncipherment, keyCertSign
+            ])
+        },
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = public_key:der_encode('BasicConstraints', #'BasicConstraints'{cA = true})
+        }
+    ].
 
 to_pem(#'Certificate'{} = Certificate) ->
     public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
