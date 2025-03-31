@@ -6,7 +6,9 @@
     derive_public_key/1,
 
     to_pem/1,
-    to_pem/2
+    to_pem/2,
+
+    to_der/1
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
@@ -58,3 +60,6 @@ to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = true, _Opts) ->
     },
 
     public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
+
+to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
+    public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
