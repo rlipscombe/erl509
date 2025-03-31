@@ -18,8 +18,6 @@ create_self_signed(PrivateKey, Subject, Options0) when
     is_binary(Subject)
 ->
     Options = apply_default_options(Options0),
-
-    % We need a serial number. Random will do for now.
     SerialNumber = create_serial_number(Options),
 
     SignatureAlgorithm = get_signature_algorithm(PrivateKey),
