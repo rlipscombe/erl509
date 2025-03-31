@@ -7,6 +7,7 @@ rsa_test() ->
     RSAPublicKey = erl509_private_key:derive_public_key(RSAPrivateKey),
     Certificate = erl509_certificate:create_self_signed(RSAPrivateKey, <<"example">>),
     _PEM = erl509_certificate:to_pem(Certificate),
+    _DER = erl509_certificate:to_der(Certificate),
 
     OTPCertificate = to_otp(Certificate),
 

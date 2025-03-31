@@ -3,7 +3,10 @@
     create_self_signed/2,
     create_self_signed/3
 ]).
--export([to_pem/1]).
+-export([
+    to_pem/1,
+    to_der/1
+]).
 
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
@@ -160,3 +163,6 @@ create_default_extensions() ->
 
 to_pem(#'Certificate'{} = Certificate) ->
     public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
+
+to_der(#'Certificate'{} = Certificate) ->
+    public_key:der_encode('Certificate', Certificate).
