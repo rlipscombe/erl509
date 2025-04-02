@@ -1,7 +1,11 @@
 -module(erl509_certificate).
 -export([
-    create_self_signed/2,
-    create_self_signed/3
+    create_self_signed/3,
+    create/5
+]).
+-export([
+    get_public_key/1,
+    get_extension/2
 ]).
 -export([
     to_pem/1,
@@ -10,9 +14,6 @@
 
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
-
-create_self_signed(PrivateKey, Subject) ->
-    create_self_signed(PrivateKey, Subject, #{}).
 
 create_self_signed(PrivateKey, Subject, Options0) when
     is_binary(Subject)
@@ -25,52 +26,17 @@ create_self_signed(PrivateKey, Subject, Options0) when
     % It's self-signed, so the issuer and subject are the same.
     Issuer = Subject,
 
-    % Note that create_rdn currently assumes that the subject is a CN.
-    SubjectRdn = erl509_rdn:create_rdn(Subject),
-    IssuerRdn = erl509_rdn:create_rdn(Issuer),
+    SubjectRdn = erl509_rdn_seq:create(Subject),
+    IssuerRdn = erl509_rdn_seq:create(Issuer),
 
-    % 10 years in seconds.
-    ExpirySeconds = 10 * 365 * 24 * 60 * 60,
-
-    NotBefore = erl509_time:encode_time(erlang:system_time(second)),
-    NotAfter = erl509_time:encode_time(erlang:system_time(second) + ExpirySeconds),
-    Validity = #'Validity'{
-        notBefore = NotBefore,
-        notAfter = NotAfter
-    },
+    Validity = create_validity(Options),
 
     PublicKey = erl509_private_key:derive_public_key(PrivateKey),
 
     SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
 
-    % The subject key identifier is used by our issued certificates to refer to this certificate.
-    SubjectKeyIdentifier = create_subject_key_identifier(PublicKey),
-
-    DefaultExtensions = create_default_extensions(),
-
-    % The subjectKeyIdentifier (and authorityKeyIdentifier) extensions are used (instead of the name) to build the
-    % certificate path.
-    SubjectKeyIdentifierExtension = #'Extension'{
-        extnID = ?'id-ce-subjectKeyIdentifier',
-        critical = false,
-        extnValue = public_key:der_encode('SubjectKeyIdentifier', SubjectKeyIdentifier)
-    },
-
-    % For now, we'll add a SAN using the subject name.
-    Hostname = Subject,
-
-    SubjectAltNameExtension = #'Extension'{
-        extnID = ?'id-ce-subjectAltName',
-        critical = false,
-        extnValue = public_key:der_encode('SubjectAltName', [{dNSName, Hostname}])
-    },
-
-    Extensions =
-        DefaultExtensions ++
-            [
-                SubjectKeyIdentifierExtension,
-                SubjectAltNameExtension
-            ],
+    #{extensions := Extensions0} = Options,
+    Extensions = create_extensions(Extensions0, PublicKey, PublicKey),
 
     % Create the certificate entity. It's a TBSCertificate.
     TbsCertificate = #'TBSCertificate'{
@@ -89,7 +55,7 @@ create_self_signed(PrivateKey, Subject, Options0) when
     % We sign the DER-encoded TBSCertificate entity.
     TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
 
-    % We're using sha256WithRSAEncryption, so we sign the certificate with this:
+    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
     Signature = public_key:sign(TbsCertificateDer, sha256, PrivateKey),
 
     #'Certificate'{
@@ -98,14 +64,73 @@ create_self_signed(PrivateKey, Subject, Options0) when
         signature = Signature
     }.
 
+create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options0) ->
+    Options = apply_default_options(Options0),
+    SerialNumber = create_serial_number(Options),
+
+    SignatureAlgorithm = get_signature_algorithm(IssuerKey),
+    IssuerPub = erl509_private_key:derive_public_key(IssuerKey),
+
+    % Get Issuer from IssuerCertificate.
+    #'Certificate'{
+        tbsCertificate = #'TBSCertificate'{
+            subject = IssuerRdn
+        }
+    } = IssuerCertificate,
+
+    SubjectRdn = erl509_rdn_seq:create(Subject),
+
+    Validity = create_validity(Options),
+
+    SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
+
+    #{extensions := Extensions0} = Options,
+    Extensions = create_extensions(Extensions0, PublicKey, IssuerPub),
+
+    % Create the certificate entity. It's a TBSCertificate.
+    TbsCertificate = #'TBSCertificate'{
+        version = v3,
+        serialNumber = SerialNumber,
+        signature = SignatureAlgorithm,
+        issuer = IssuerRdn,
+        validity = Validity,
+        subject = SubjectRdn,
+        subjectPublicKeyInfo = SubjectPublicKeyInfo,
+        issuerUniqueID = asn1_NOVALUE,
+        subjectUniqueID = asn1_NOVALUE,
+        extensions = Extensions
+    },
+
+    % We sign the DER-encoded TBSCertificate entity.
+    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
+
+    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
+    Signature = public_key:sign(TbsCertificateDer, sha256, IssuerKey),
+
+    #'Certificate'{
+        tbsCertificate = TbsCertificate,
+        signatureAlgorithm = SignatureAlgorithm,
+        signature = Signature
+    }.
+
 apply_default_options(Options) ->
-    DefaultOptions = #{serial_number => random},
+    DefaultOptions = #{serial_number => random, validity => 365},
     maps:merge(DefaultOptions, Options).
 
 create_serial_number(#{serial_number := random} = _Options) ->
     rand:uniform(16#7FFF_FFFF_FFFF_FFFF);
 create_serial_number(#{serial_number := SerialNumber} = _Options) when is_integer(SerialNumber) ->
     SerialNumber.
+
+create_validity(#{validity := ExpiryDays} = _Options) ->
+    ExpirySeconds = ExpiryDays * 24 * 60 * 60,
+
+    NotBefore = erl509_time:encode_time(erlang:system_time(second)),
+    NotAfter = erl509_time:encode_time(erlang:system_time(second) + ExpirySeconds),
+    #'Validity'{
+        notBefore = NotBefore,
+        notAfter = NotAfter
+    }.
 
 get_signature_algorithm(#'RSAPrivateKey'{}) ->
     #'AlgorithmIdentifier'{
@@ -132,32 +157,46 @@ create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
         subjectPublicKey = Point
     }.
 
-create_subject_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
-    % RFC 5280 says "subject key identifiers SHOULD be derived from the public key or a method that generates unique values".
-    %
-    % It says a common method of doing that is "the 160-bit SHA-1 hash of the value of the BIT STRING subjectPublicKey".
-    %
-    % So we'll do that.
-    crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
-create_subject_key_identifier({#'ECPoint'{point = Point} = _EC, _Parameters}) ->
-    crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
+create_extensions(Extensions0, SubjectPub, IssuerPub) ->
+    maps:fold(
+        fun
+            (_Key, #'Extension'{} = Extension, Acc) ->
+                [Extension | Acc];
+            (subject_key_identifier, true, Acc) ->
+                Extension = erl509_certificate_extension:create_subject_key_identifier_extension(
+                    SubjectPub
+                ),
+                [Extension | Acc];
+            (subject_key_identifier, false, Acc) ->
+                Acc;
+            (authority_key_identifier, true, Acc) ->
+                Extension = erl509_certificate_extension:create_authority_key_identifier_extension(
+                    IssuerPub
+                ),
+                [Extension | Acc];
+            (authority_key_identifier, false, Acc) ->
+                Acc
+        end,
+        [],
+        Extensions0
+    ).
 
-% These are suitable default extensions for a CA certificate.
-create_default_extensions() ->
-    [
-        #'Extension'{
-            extnID = ?'id-ce-keyUsage',
-            critical = true,
-            extnValue = public_key:der_encode('KeyUsage', [
-                digitalSignature, keyEncipherment, keyCertSign
-            ])
-        },
-        #'Extension'{
-            extnID = ?'id-ce-basicConstraints',
-            critical = true,
-            extnValue = public_key:der_encode('BasicConstraints', #'BasicConstraints'{cA = true})
-        }
-    ].
+get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
+    get_public_key(TbsCertificate);
+get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
+    erl509_public_key:unwrap(SubjectPublicKeyInfo).
+
+get_extension(#'Certificate'{} = Certificate, ExtnID) ->
+    % TODO: voltone/x509 uses OTPCertificate as the internal representation; we should do the same.
+    OTPCert = public_key:pkix_decode_cert(public_key:der_encode('Certificate', Certificate), otp),
+    get_extension(OTPCert, ExtnID);
+get_extension(
+    #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
+) ->
+    case lists:search(fun(#'Extension'{extnID = ID}) -> ID == ExtnID end, Extensions) of
+        {value, Extension} -> Extension;
+        false -> undefined
+    end.
 
 to_pem(#'Certificate'{} = Certificate) ->
     public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).

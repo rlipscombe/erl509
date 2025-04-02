@@ -3,13 +3,21 @@
 
 -include_lib("public_key/include/public_key.hrl").
 
-create_rdn(Value) when is_binary(Value) ->
+create_rdn(<<"CN=", Value/binary>>) ->
+    create_rdn(?'id-at-commonName', Value);
+create_rdn(<<"O=", Value/binary>>) ->
+    create_rdn(?'id-at-organizationName', Value);
+create_rdn(Value) when is_list(Value) ->
+    create_rdn(list_to_binary(Value)).
+
+create_rdn(Type, Value) ->
     Len = byte_size(Value),
-    {rdnSequence, [
-        [
-            #'AttributeTypeAndValue'{
-                type = ?'id-at-commonName',
-                value = <<19, Len:8, Value/binary>>
-            }
-        ]
-    ]}.
+    create_rdn(Type, Len, Value).
+
+create_rdn(Type, Len, Value) when Len =< 255 ->
+    [
+        #'AttributeTypeAndValue'{
+            type = Type,
+            value = <<19, Len:8, Value/binary>>
+        }
+    ].

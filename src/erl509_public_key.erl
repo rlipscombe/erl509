@@ -2,6 +2,9 @@
 -export([
     derive_public_key/1,
 
+    wrap/1,
+    unwrap/1,
+
     to_pem/1,
     to_pem/2
 ]).
@@ -18,27 +21,40 @@ to_pem(PublicKey) ->
 to_pem(PublicKey, Opts) ->
     to_pem(PublicKey, proplists:get_bool(wrapped, Opts), Opts).
 
-to_pem(RSAPublicKey = #'RSAPublicKey'{}, _Wrapped = false, _Opts) ->
+to_pem(#'RSAPublicKey'{} = RSAPublicKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('RSAPublicKey', RSAPublicKey)]);
-to_pem(RSAPublicKey = #'RSAPublicKey'{}, _Wrapped = true, _Opts) ->
-    SubjectPublicKeyInfo = #'SubjectPublicKeyInfo'{
+to_pem(#'RSAPublicKey'{} = RSAPublicKey, _Wrapped = true, _Opts) ->
+    SubjectPublicKeyInfo = wrap(RSAPublicKey),
+    public_key:pem_encode([
+        public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
+    ]);
+to_pem({#'ECPoint'{point = _}, _} = ECPublicKey, _Wrapped, _Opts) ->
+    SubjectPublicKeyInfo = wrap(ECPublicKey),
+    public_key:pem_encode([
+        public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
+    ]).
+
+wrap(#'RSAPublicKey'{} = RSAPublicKey) ->
+    #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
             algorithm = ?'rsaEncryption',
             parameters = ?DER_NULL
         },
         subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
-    },
-    public_key:pem_encode([
-        public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
-    ]);
-to_pem({#'ECPoint'{point = Point}, Parameters}, _Wrapped, _Opts) ->
-    SubjectPublicKeyInfo = #'SubjectPublicKeyInfo'{
+    };
+wrap({#'ECPoint'{point = Point}, Parameters}) ->
+    #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
             algorithm = ?'id-ecPublicKey',
             parameters = public_key:der_encode('EcpkParameters', Parameters)
         },
         subjectPublicKey = public_key:der_encode('ECPoint', Point)
-    },
-    public_key:pem_encode([
-        public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
-    ]).
+    }.
+
+unwrap(
+    #'SubjectPublicKeyInfo'{
+        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = _},
+        subjectPublicKey = SubjectPublicKey
+    } = _SubjectPublicKeyInfo
+) ->
+    public_key:der_decode('RSAPublicKey', SubjectPublicKey).
