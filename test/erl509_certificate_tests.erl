@@ -143,7 +143,7 @@ serial_number_test() ->
     ?assertEqual(12345, SerialNumber),
     ok.
 
-validity_test_skipped() ->
+validity_test() ->
     ECPrivateKey = erl509_private_key:create_ec(secp256r1),
     Certificate = erl509_certificate:create_self_signed(ECPrivateKey, <<"CN=example">>, #{
         % in days
@@ -159,13 +159,9 @@ validity_test_skipped() ->
         }
     } = OTPCertificate,
 
-    % We can't assert the validity directly, because (1) we'd end up using the functions we created it with; (2) we'd be
-    % sensitive to the time the test takes (in seconds). So we'll parse the values and round them to days and check that.
-    #'Validity'{notBefore = NotBefore, notAfter = NotAfter} = Validity,
-
-    % TODO:
-    ?assertEqual(moo, NotBefore),
-    ?assertEqual(moo, NotAfter),
+    {NotBefore, NotAfter} = parse_validity(Validity),
+    ?assert(NotBefore =< erlang:system_time(second)),
+    ?assertEqual(90 * 24 * 60 * 60, NotAfter - NotBefore),
     ok.
 
 server_rsa_test() ->
@@ -224,7 +220,9 @@ server_rsa_test() ->
     ),
     ?assertEqual(ServerPub, SubjectPublicKey),
 
-    % TODO: assert 1 year validity.
+    {NotBefore, NotAfter} = parse_validity(Validity),
+    ?assert(NotBefore =< erlang:system_time(second)),
+    ?assertEqual(1 * 365 * 24 * 60 * 60, NotAfter - NotBefore),
 
     ?assertEqual(5, length(Extensions)),
     % lists:search(fun(moo) -> false end, Extensions),
@@ -234,6 +232,9 @@ server_rsa_test() ->
 to_otp(#'Certificate'{} = Certificate) ->
     DER = public_key:der_encode('Certificate', Certificate),
     public_key:pkix_decode_cert(DER, otp).
+
+parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
+    {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.
 
 % TODO: issuing intermediate CA certificate.
 % TODO: issuing client certificates.
