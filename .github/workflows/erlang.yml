@@ -10,13 +10,11 @@ permissions:
   contents: read
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     container:
-      image: erlang:27.2
+      image: erlang:27.3.3
 
     steps:
     - uses: actions/checkout@v4
