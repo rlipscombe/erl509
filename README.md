@@ -61,3 +61,20 @@ ok = file:write_file("server.crt", ServerPEM).
 
 Ideally, we'd eventually reach feature-parity with the [voltone/x509](https://github.com/voltone/x509) package for
 Elixir (which is excellent, by the way).
+
+## Scripting
+
+You can run `rebar3 escriptize` to get a simple Erlang escript that can be used from the command line:
+
+```sh
+rebar3 escriptize
+
+./_build/default/bin/erl509 self-signed \
+    --out-cert root.crt --out-key root.key \
+    --template root_ca --subject "CN=root"
+
+./_build/default/bin/erl509 create-cert \
+    --issuer-cert root.crt --issuer-key root.key \
+    --out-cert server.crt --out-key server.key \
+    --template server --subject "CN=localhost"
+```
