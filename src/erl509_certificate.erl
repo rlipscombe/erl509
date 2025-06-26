@@ -8,6 +8,7 @@
     get_extension/2
 ]).
 -export([
+    from_pem/1,
     to_pem/1,
     to_der/1
 ]).
@@ -197,6 +198,10 @@ get_extension(
         {value, Extension} -> Extension;
         false -> undefined
     end.
+
+from_pem(Pem) when is_binary(Pem) ->
+    [Entry = {_, _, not_encrypted}] = public_key:pem_decode(Pem),
+    public_key:pem_entry_decode(Entry).
 
 to_pem(#'Certificate'{} = Certificate) ->
     public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
