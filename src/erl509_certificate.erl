@@ -15,11 +15,11 @@
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
 
-create_self_signed(PrivateKey, Subject, Options0) when
+create_self_signed(PrivateKey, Subject, Options) when
     is_binary(Subject)
 ->
-    Options = apply_default_options(Options0),
-    SerialNumber = create_serial_number(Options),
+    Options2 = apply_default_options(Options),
+    SerialNumber = create_serial_number(Options2),
 
     SignatureAlgorithm = get_signature_algorithm(PrivateKey),
 
@@ -29,13 +29,13 @@ create_self_signed(PrivateKey, Subject, Options0) when
     SubjectRdn = erl509_rdn_seq:create(Subject),
     IssuerRdn = erl509_rdn_seq:create(Issuer),
 
-    Validity = create_validity(Options),
+    Validity = create_validity(Options2),
 
     PublicKey = erl509_private_key:derive_public_key(PrivateKey),
 
     SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
 
-    #{extensions := Extensions0} = Options,
+    #{extensions := Extensions0} = Options2,
     Extensions = create_extensions(Extensions0, PublicKey, PublicKey),
 
     % Create the certificate entity. It's a TBSCertificate.
@@ -64,9 +64,9 @@ create_self_signed(PrivateKey, Subject, Options0) when
         signature = Signature
     }.
 
-create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options0) ->
-    Options = apply_default_options(Options0),
-    SerialNumber = create_serial_number(Options),
+create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
+    Options2 = apply_default_options(Options),
+    SerialNumber = create_serial_number(Options2),
 
     SignatureAlgorithm = get_signature_algorithm(IssuerKey),
     IssuerPub = erl509_private_key:derive_public_key(IssuerKey),
@@ -80,11 +80,11 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options0) ->
 
     SubjectRdn = erl509_rdn_seq:create(Subject),
 
-    Validity = create_validity(Options),
+    Validity = create_validity(Options2),
 
     SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
 
-    #{extensions := Extensions0} = Options,
+    #{extensions := Extensions0} = Options2,
     Extensions = create_extensions(Extensions0, PublicKey, IssuerPub),
 
     % Create the certificate entity. It's a TBSCertificate.
