@@ -4,6 +4,8 @@
     stop/1
 ]).
 
+%% Demonstrate how to start OTP's built-in HTTP server, using TLS and in-memory certificates.
+
 start(ServerCert, ServerKey) ->
     {ok, _} = application:ensure_all_started([inets, ssl]),
 
