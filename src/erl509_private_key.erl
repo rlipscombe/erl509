@@ -8,7 +8,9 @@
     to_pem/1,
     to_pem/2,
 
-    to_der/1
+    to_der/1,
+
+    from_pem/1
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
@@ -63,3 +65,12 @@ to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = true, _Opts) ->
 
 to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
     public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
+
+from_pem(Pem) when is_binary(Pem) ->
+    [Entry = {_, _, not_encrypted}] = public_key:pem_decode(Pem),
+    case public_key:pem_entry_decode(Entry) of
+        #'OneAsymmetricKey'{privateKey = Der} ->
+            public_key:der_decode('ECPrivateKey', Der);
+        Key ->
+            Key
+    end.

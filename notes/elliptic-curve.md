@@ -120,8 +120,7 @@ File.write!("elixir-ec.crt", X509.Certificate.to_pem(cert))
 
 ```erlang
 {ok, Pem} = file:read_file("ec.key").
-% `erl509` doesn't provide `from_pem` functions yet:
-[_, Key] = [public_key:pem_entry_decode(E) || E <- public_key:pem_decode(Pem)].
+Key = erl509_private_key:from_pem(Pem).
 Cert = erl509_certificate:create_self_signed(Key, <<"example">>).
 file:write_file("erlang-ec.crt", erl509_certificate:to_pem(Cert)).
 ```
