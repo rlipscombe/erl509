@@ -39,8 +39,8 @@ create_self_signed(PrivateKey, Subject, Options) when
     #{extensions := Extensions0} = Options2,
     Extensions = create_extensions(Extensions0, PublicKey, PublicKey),
 
-    % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'TBSCertificate'{
+    % Create the certificate entity. It's an OTPTBSCertificate.
+    TbsCertificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -53,13 +53,13 @@ create_self_signed(PrivateKey, Subject, Options) when
         extensions = Extensions
     },
 
-    % We sign the DER-encoded TBSCertificate entity.
-    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
+    % We sign the DER-encoded OTPTBSCertificate entity.
+    TbsCertificateDer = public_key:der_encode('OTPTBSCertificate', TbsCertificate),
 
     % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
     Signature = public_key:sign(TbsCertificateDer, sha256, PrivateKey),
 
-    #'Certificate'{
+    #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
@@ -133,12 +133,12 @@ create_validity(#{validity := ExpiryDays} = _Options) ->
         notAfter = NotAfter
     }.
 
-get_signature_algorithm(#'RSAPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+get_signature_algorithm(_PrivateKey = #'RSAPrivateKey'{}) ->
+    #'SignatureAlgorithm'{
         algorithm = ?sha256WithRSAEncryption,
         parameters = ?DER_NULL
     };
-get_signature_algorithm(#'ECPrivateKey'{}) ->
+get_signature_algorithm(_PrivateKey = #'ECPrivateKey'{}) ->
     #'AlgorithmIdentifier'{
         algorithm = ?'ecdsa-with-SHA256',
         parameters = asn1_NOVALUE
@@ -146,7 +146,7 @@ get_signature_algorithm(#'ECPrivateKey'{}) ->
 
 create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
     #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = ?DER_NULL},
+        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = 'NULL'},
         subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
     };
 create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->

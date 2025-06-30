@@ -23,12 +23,19 @@ iex(1)> :erl509_private_key.create_ec(:secp256r1)
 So, for example, to assert that `erl509` and `x509` create PEM-formatted elliptic private keys in the same way:
 
 ```elixir
-Mix.install([{:x509, "~> 0.8.3"}])
+Mix.install([{:x509, "~> 0.9.1"}])
 import ExUnit.Assertions
 
 k = :erl509_private_key.create_ec(:secp256r1)
 assert :erl509_private_key.to_pem(k) == X509.PrivateKey.to_pem(k)
 ```
 
-Asserting certificates is trickier, because `x509` generates `OTPCertificate` objects and `erl509` currently generates
-`Certificate` objects.
+## Certificates
+
+```elixir
+Mix.install([{:x509, "~> 0.9.1"}])
+import ExUnit.Assertions
+
+key = X509.PrivateKey.new_rsa(2048)
+cert = X509.Certificate.self_signed(key, "CN=server")
+```
