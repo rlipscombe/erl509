@@ -14,6 +14,10 @@
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -define(DER_NULL, <<5, 0>>).
 
 create_self_signed(PrivateKey, Subject, Options) when
@@ -158,6 +162,10 @@ create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
         subjectPublicKey = Point
     }.
 
+-spec create_extensions(
+    Extensions0 :: map(), SubjectPub :: erl509_public_key:t(), IssuerPub :: erl509_public_key:t()
+) -> map().
+
 create_extensions(Extensions0, SubjectPub, IssuerPub) ->
     maps:fold(
         fun
@@ -208,3 +216,10 @@ to_pem(#'Certificate'{} = Certificate) ->
 
 to_der(#'Certificate'{} = Certificate) ->
     public_key:der_encode('Certificate', Certificate).
+
+-ifdef(TEST).
+create_extensions_test() ->
+    PrivateKey = erl509_private_key:create_rsa(2048),
+    PublicKey = erl509_private_key:derive_public_key(PrivateKey),
+    ?assertEqual(moo, create_extensions(#{}, PublicKey, PublicKey)).
+-endif.
