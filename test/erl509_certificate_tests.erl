@@ -30,8 +30,11 @@ self_signed_rsa_test() ->
             extensions = _
         },
         signatureAlgorithm = SignatureAlgorithm,
-        signature = _
+        signature = Signature
     } = OTPCertificate,
+
+    ?assertEqual(2048, 8 * byte_size(Signature)),
+
     ?assertEqual(
         {rdnSequence, [
             [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]
