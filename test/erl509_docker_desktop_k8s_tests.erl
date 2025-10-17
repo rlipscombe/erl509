@@ -336,9 +336,9 @@ client_test() ->
         CATemplate
     ),
 
-    % Create the server certificate.
-    ServerPrivateKey = erl509_private_key:create_rsa(2048),
-    ServerPublicKey = erl509_public_key:derive_public_key(ServerPrivateKey),
+    % Create the client certificate.
+    ClientPrivateKey = erl509_private_key:create_rsa(2048),
+    ClientPublicKey = erl509_public_key:derive_public_key(ClientPrivateKey),
 
     ClientTemplate = erl509_certificate_template:client(#{
         extensions => #{
@@ -352,7 +352,7 @@ client_test() ->
     }),
 
     ClientCert = erl509_certificate:create(
-        ServerPublicKey,
+        ClientPublicKey,
         <<"O=system:masters, CN=docker-for-desktop">>,
         CACert,
         CAPrivateKey,
