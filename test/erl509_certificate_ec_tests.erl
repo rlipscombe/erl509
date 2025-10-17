@@ -11,7 +11,10 @@ self_signed_ec_test() ->
     PEM = erl509_certificate:to_pem(Certificate),
     ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
 
-    ?assert(pubkey_cert:is_self_signed(OTPCertificate)),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(Certificate)),
+
+    ?assert(pubkey_cert:is_self_signed(Cert)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
@@ -28,7 +31,7 @@ self_signed_ec_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = _
-    } = OTPCertificate,
+    } = Cert,
     ?assertEqual(
         {rdnSequence, [
             [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]

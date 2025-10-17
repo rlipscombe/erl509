@@ -9,13 +9,14 @@ serial_number_test() ->
         extensions => #{}
     }),
 
-    OTPCertificate = to_otp(Certificate),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(Certificate)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             serialNumber = SerialNumber
         }
-    } = OTPCertificate,
+    } = Cert,
     ?assertEqual(12345, SerialNumber),
     ok.
 
@@ -27,22 +28,19 @@ validity_test() ->
         extensions => #{}
     }),
 
-    OTPCertificate = to_otp(Certificate),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(Certificate)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             validity = Validity
         }
-    } = OTPCertificate,
+    } = Cert,
 
     {NotBefore, NotAfter} = parse_validity(Validity),
     ?assert(NotBefore =< erlang:system_time(second)),
     ?assertEqual(90 * 24 * 60 * 60, NotAfter - NotBefore),
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.
