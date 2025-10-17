@@ -55,13 +55,7 @@ create_self_signed(PrivateKey, Subject, Options) when
         extensions = Extensions
     },
 
-    Signature = public_key:pkix_sign(OtpTbsCertificate, PrivateKey),
-
-    #'OTPCertificate'{
-        tbsCertificate = OtpTbsCertificate,
-        signatureAlgorithm = SignatureAlgorithm,
-        signature = Signature
-    }.
+    from_der(public_key:pkix_sign(OtpTbsCertificate, PrivateKey)).
 
 create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
     Options2 = apply_default_options(Options),
@@ -100,13 +94,7 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
         extensions = Extensions
     },
 
-    Signature = public_key:pkix_sign(OtpTbsCertificate, IssuerKey),
-
-    #'OTPCertificate'{
-        tbsCertificate = OtpTbsCertificate,
-        signatureAlgorithm = SignatureAlgorithm,
-        signature = Signature
-    }.
+    from_der(public_key:pkix_sign(OtpTbsCertificate, IssuerKey)).
 
 apply_default_options(Options) ->
     DefaultOptions = #{serial_number => random, validity => 365},
