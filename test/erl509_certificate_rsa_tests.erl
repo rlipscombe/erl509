@@ -72,8 +72,6 @@ server_rsa_test() ->
         ServerPub, <<"CN=server">>, CACert, CAKey, erl509_certificate_template:server()
     ),
 
-    OTPCertificate = to_otp(ServerCert),
-
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             version = _,
@@ -89,7 +87,7 @@ server_rsa_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
-    } = OTPCertificate,
+    } = ServerCert,
 
     ?assertEqual(2048, 8 * byte_size(Signature)),
 
@@ -124,13 +122,10 @@ server_rsa_test() ->
     ?assertEqual(1 * 365 * 24 * 60 * 60, NotAfter - NotBefore),
 
     ?assertEqual(5, length(Extensions)),
+    % TODO: Search the extensions and check they're correct.
     % lists:search(fun(moo) -> false end, Extensions),
 
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.
