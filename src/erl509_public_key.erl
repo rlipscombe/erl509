@@ -6,7 +6,9 @@
     unwrap/1,
 
     to_pem/1,
-    to_pem/2
+    to_pem/2,
+
+    from_pem/1
 ]).
 
 -export_type([
@@ -57,6 +59,16 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
         subjectPublicKey = public_key:der_encode('ECPoint', Point)
     }.
 
+from_pem(Pem) when is_binary(Pem) ->
+    case public_key:pem_decode(Pem) of
+        % elp:ignore W0027
+        [{'SubjectPublicKeyInfo', Der, not_encrypted}] ->
+            unwrap(public_key:der_decode('SubjectPublicKeyInfo', Der));
+        % elp:ignore W0027
+        [{'RSAPublicKey', Der, not_encrypted}] ->
+            public_key:der_decode('RSAPublicKey', Der)
+    end.
+
 unwrap(
     #'OTPSubjectPublicKeyInfo'{
         algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = _},
@@ -70,4 +82,17 @@ unwrap(
         subjectPublicKey = SubjectPublicKey
     } = _SubjectPublicKeyInfo
 ) ->
-    public_key:der_decode('RSAPublicKey', SubjectPublicKey).
+    public_key:der_decode('RSAPublicKey', SubjectPublicKey);
+unwrap(
+    #'SubjectPublicKeyInfo'{
+        algorithm = #'AlgorithmIdentifier'{
+            algorithm = ?'id-ecPublicKey',
+            parameters = Parameters
+        },
+        subjectPublicKey = Point
+    }
+) ->
+    {
+        #'ECPoint'{point = public_key:der_decode('ECPoint', Point)},
+        public_key:der_decode('EcpkParameters', Parameters)
+    }.
