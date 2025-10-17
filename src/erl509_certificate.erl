@@ -93,7 +93,7 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
     Extensions = create_extensions(Extensions0, PublicKey, IssuerPub),
 
     % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'TBSCertificate'{
+    TbsCertificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -112,7 +112,7 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
     % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
     Signature = public_key:sign(TbsCertificateDer, sha256, IssuerKey),
 
-    #'Certificate'{
+    #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
@@ -138,9 +138,9 @@ create_validity(#{validity := ExpiryDays} = _Options) ->
     }.
 
 get_signature_algorithm(#'RSAPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+    #'SignatureAlgorithm'{
         algorithm = ?sha256WithRSAEncryption,
-        parameters = ?DER_NULL
+        parameters = 'NULL'
     };
 get_signature_algorithm(#'ECPrivateKey'{}) ->
     #'AlgorithmIdentifier'{
@@ -149,9 +149,9 @@ get_signature_algorithm(#'ECPrivateKey'{}) ->
     }.
 
 create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
-    #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = ?DER_NULL},
-        subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = 'NULL'},
+        subjectPublicKey = RSAPublicKey
     };
 create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
     #'SubjectPublicKeyInfo'{

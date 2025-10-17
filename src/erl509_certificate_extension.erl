@@ -22,7 +22,7 @@ create_key_usage_extension(KeyUsage) ->
     #'Extension'{
         extnID = ?'id-ce-keyUsage',
         critical = true,
-        extnValue = public_key:der_encode('KeyUsage', KeyUsage)
+        extnValue = KeyUsage
     }.
 
 create_basic_constraints_extension(IsCA) ->
@@ -32,11 +32,7 @@ create_basic_constraints_extension(IsCA, PathLenConstraint) ->
     #'Extension'{
         extnID = ?'id-ce-basicConstraints',
         critical = true,
-        extnValue = public_key:der_encode(
-            'BasicConstraints', #'BasicConstraints'{
-                cA = IsCA, pathLenConstraint = PathLenConstraint
-            }
-        )
+        extnValue = #'BasicConstraints'{cA = IsCA, pathLenConstraint = PathLenConstraint}
     }.
 
 create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyUsages) ->
@@ -55,9 +51,7 @@ create_subject_key_identifier_extension(SubjectPub) ->
     #'Extension'{
         extnID = ?'id-ce-subjectKeyIdentifier',
         critical = false,
-        extnValue = public_key:der_encode(
-            'SubjectKeyIdentifier', SubjectKeyIdentifier
-        )
+        extnValue = SubjectKeyIdentifier
     }.
 
 create_authority_key_identifier_extension(IssuerPub) ->
