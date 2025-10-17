@@ -68,9 +68,7 @@ create_subject_alt_name_extension(Names) ->
     #'Extension'{
         extnID = ?'id-ce-subjectAltName',
         critical = false,
-        extnValue = public_key:der_encode(
-            'SubjectAltName', lists:map(fun to_subject_alt_name/1, Names)
-        )
+        extnValue = lists:map(fun to_subject_alt_name/1, Names)
     }.
 
 to_subject_alt_name(Name) when is_binary(Name) ->
