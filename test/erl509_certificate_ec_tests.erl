@@ -11,8 +11,6 @@ self_signed_ec_test() ->
     PEM = erl509_certificate:to_pem(Certificate),
     ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
 
-    OTPCertificate = to_otp(Certificate),
-
     ?assert(pubkey_cert:is_self_signed(OTPCertificate)),
 
     #'OTPCertificate'{
@@ -70,10 +68,6 @@ self_signed_ec_test() ->
         Extn
     ),
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 % TODO: issuing intermediate CA certificate.
 % TODO: issuing client certificates.

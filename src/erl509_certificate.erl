@@ -121,7 +121,7 @@ get_signature_algorithm(#'RSAPrivateKey'{}) ->
         parameters = 'NULL'
     };
 get_signature_algorithm(#'ECPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+    #'SignatureAlgorithm'{
         algorithm = ?'ecdsa-with-SHA256',
         parameters = asn1_NOVALUE
     }.
@@ -131,13 +131,13 @@ create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
         algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = 'NULL'},
         subjectPublicKey = RSAPublicKey
     };
-create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
-    #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{
+create_subject_public_key_info({#'ECPoint'{point = _} = ECPoint, Parameters}) ->
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{
             algorithm = ?'id-ecPublicKey',
-            parameters = public_key:der_encode('EcpkParameters', Parameters)
+            parameters = Parameters
         },
-        subjectPublicKey = Point
+        subjectPublicKey = ECPoint
     }.
 
 -spec create_extensions(
