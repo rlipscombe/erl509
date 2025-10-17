@@ -12,7 +12,10 @@ self_signed_rsa_test() ->
     % ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
     _DER = erl509_certificate:to_der(Certificate),
 
-    ?assert(pubkey_cert:is_self_signed(Certificate)),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(Certificate)),
+
+    ?assert(pubkey_cert:is_self_signed(Cert)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
@@ -29,7 +32,7 @@ self_signed_rsa_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
-    } = Certificate,
+    } = Cert,
 
     ?assertEqual(2048, 8 * byte_size(Signature)),
 
@@ -72,6 +75,9 @@ server_rsa_test() ->
         ServerPub, <<"CN=server">>, CACert, CAKey, erl509_certificate_template:server()
     ),
 
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(ServerCert)),
+
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             version = _,
@@ -87,7 +93,7 @@ server_rsa_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
-    } = ServerCert,
+    } = Cert,
 
     ?assertEqual(2048, 8 * byte_size(Signature)),
 
