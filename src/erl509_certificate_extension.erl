@@ -32,16 +32,20 @@ create_basic_constraints_extension(IsCA, PathLenConstraint) ->
     #'Extension'{
         extnID = ?'id-ce-basicConstraints',
         critical = true,
-        extnValue = public_key:der_encode('BasicConstraints', #'BasicConstraints'{
-            cA = IsCA, pathLenConstraint = PathLenConstraint
-        })
+        extnValue = public_key:der_encode(
+            'BasicConstraints', #'BasicConstraints'{
+                cA = IsCA, pathLenConstraint = PathLenConstraint
+            }
+        )
     }.
 
 create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyUsages) ->
     #'Extension'{
         extnID = ?'id-ce-extKeyUsage',
         critical = false,
-        extnValue = public_key:der_encode('ExtKeyUsageSyntax', ExtendedKeyUsages)
+        extnValue = public_key:der_encode(
+            'ExtKeyUsageSyntax', ExtendedKeyUsages
+        )
     }.
 
 create_subject_key_identifier_extension(SubjectPub) ->
@@ -51,7 +55,9 @@ create_subject_key_identifier_extension(SubjectPub) ->
     #'Extension'{
         extnID = ?'id-ce-subjectKeyIdentifier',
         critical = false,
-        extnValue = public_key:der_encode('SubjectKeyIdentifier', SubjectKeyIdentifier)
+        extnValue = public_key:der_encode(
+            'SubjectKeyIdentifier', SubjectKeyIdentifier
+        )
     }.
 
 create_authority_key_identifier_extension(IssuerPub) ->
@@ -59,14 +65,18 @@ create_authority_key_identifier_extension(IssuerPub) ->
     #'Extension'{
         extnID = ?'id-ce-authorityKeyIdentifier',
         critical = false,
-        extnValue = public_key:der_encode('AuthorityKeyIdentifier', AuthorityKeyIdentifier)
+        extnValue = public_key:der_encode(
+            'AuthorityKeyIdentifier', AuthorityKeyIdentifier
+        )
     }.
 
 create_subject_alt_name_extension(Names) ->
     #'Extension'{
         extnID = ?'id-ce-subjectAltName',
         critical = false,
-        extnValue = public_key:der_encode('SubjectAltName', lists:map(fun to_subject_alt_name/1, Names))
+        extnValue = public_key:der_encode(
+            'SubjectAltName', lists:map(fun to_subject_alt_name/1, Names)
+        )
     }.
 
 to_subject_alt_name(Name) when is_binary(Name) ->
