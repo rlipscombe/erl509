@@ -18,8 +18,6 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--define(DER_NULL, <<5, 0>>).
-
 create_self_signed(PrivateKey, Subject, Options) when
     is_binary(Subject)
 ->
@@ -43,8 +41,8 @@ create_self_signed(PrivateKey, Subject, Options) when
     #{extensions := Extensions0} = Options2,
     Extensions = create_extensions(Extensions0, PublicKey, PublicKey),
 
-    % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'TBSCertificate'{
+    % Create the certificate entity. It's an OTPTBSCertificate.
+    TbsCertificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -57,11 +55,8 @@ create_self_signed(PrivateKey, Subject, Options) when
         extensions = Extensions
     },
 
-    % We sign the DER-encoded TBSCertificate entity.
-    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
-
     % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
-    Signature = public_key:sign(TbsCertificateDer, sha256, PrivateKey),
+    Signature = public_key:pkix_sign(TbsCertificate, PrivateKey),
 
     #'Certificate'{
         tbsCertificate = TbsCertificate,
@@ -164,7 +159,7 @@ create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
 
 -spec create_extensions(
     Extensions0 :: map(), SubjectPub :: erl509_public_key:t(), IssuerPub :: erl509_public_key:t()
-) -> map().
+) -> [#'Extension'{}].
 
 create_extensions(Extensions0, SubjectPub, IssuerPub) ->
     maps:fold(
