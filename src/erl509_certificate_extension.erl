@@ -99,17 +99,40 @@ all_test_() ->
             erl509_private_key:derive_public_key(PrivateKey)
         end,
         {with, [
+            fun basic_constraints_extension_is_ca/1,
+            fun basic_constraints_extension_is_not_ca/1,
             fun subject_key_identifier/1,
             fun authority_key_identifier/1
         ]}}.
+
+basic_constraints_extension_is_ca(_) ->
+    ?assertEqual(
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = #'BasicConstraints'{cA = true, pathLenConstraint = 3}
+        },
+        erl509_certificate_extension:create_basic_constraints_extension(true, 3)
+    ),
+    ok.
+
+basic_constraints_extension_is_not_ca(_) ->
+    ?assertEqual(
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE}
+        },
+        erl509_certificate_extension:create_basic_constraints_extension(false)
+    ),
+    ok.
 
 subject_key_identifier(PublicKey) ->
     #'Extension'{
         extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
     % SubjectKeyIdentifier is just the hash, not a record.
-    SKI = public_key:der_decode('SubjectKeyIdentifier', Value),
-    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), SKI),
+    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), Value),
     ok.
 
 authority_key_identifier(PublicKey) ->
@@ -121,7 +144,7 @@ authority_key_identifier(PublicKey) ->
         keyIdentifier = AuthorityKeyIdentifier,
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
-    } = public_key:der_decode('AuthorityKeyIdentifier', Value),
+    } = Value,
     ?assertEqual(
         crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), AuthorityKeyIdentifier
     ),
