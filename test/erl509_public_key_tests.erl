@@ -8,6 +8,8 @@ rsa_test() ->
     ?assertMatch(<<"-----BEGIN RSA PUBLIC KEY-----\n", _Rest/binary>>, PEM),
     WrappedPEM = erl509_public_key:to_pem(RSAPublicKey, [wrapped]),
     ?assertMatch(<<"-----BEGIN PUBLIC KEY-----\n", _Rest/binary>>, WrappedPEM),
+    % _ = erl509_public_key:from_pem(WrappedPEM),
+    % _ = erl509_public_key:from_pem(PEM),
     ok.
 
 ec_test() ->
@@ -18,4 +20,6 @@ ec_test() ->
     ?assertMatch(<<"-----BEGIN PUBLIC KEY-----\n", _Rest/binary>>, PEM),
     WrappedPEM = erl509_public_key:to_pem(ECPublicKey, [wrapped]),
     ?assertMatch(<<"-----BEGIN PUBLIC KEY-----\n", _Rest/binary>>, WrappedPEM),
+    % _ = erl509_public_key:from_pem(WrappedPEM),
+    % _ = erl509_public_key:from_pem(PEM),
     ok.
