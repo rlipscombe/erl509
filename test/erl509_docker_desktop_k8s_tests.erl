@@ -435,7 +435,7 @@ client_test() ->
     } = SubjectPublicKeyInfo,
 
     ?assertEqual(#'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = 'NULL'}, Algorithm),
-    ?assertEqual(erl509_public_key:derive_public_key(ServerPrivateKey), SubjectPublicKey),
+    ?assertEqual(erl509_public_key:derive_public_key(ClientPrivateKey), SubjectPublicKey),
 
     % X509v3 extensions:
     %     X509v3 Key Usage: critical
