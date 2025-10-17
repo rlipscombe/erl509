@@ -10,7 +10,7 @@ Round-trip via `erl509`:
 ```erlang
 {ok, Pem} = fle:read_file("openssl-ca-2048.key").
 Key = erl509_private_key:from_pem(Pem).
-file:write_file("openssl-ca-2048-erl509.key", erl509_private_key:to_pem(Key, [wrapped])).
+file:write_file("openssl-ca-2048-erl509.key", erl509_private_key:to_pem(Key, [wrap])).
 ```
 
 The `erl509`-generated file is one byte larger, because it has an extra LF on the end.

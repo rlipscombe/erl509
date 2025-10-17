@@ -63,7 +63,7 @@ to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true,
         })
     },
 
-    public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
+    public_key:pem_encode([public_key:pem_entry_encode('ECPrivateKey', PrivateKeyInfo)]).
 
 to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
     public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
