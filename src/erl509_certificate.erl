@@ -218,8 +218,25 @@ to_der(#'Certificate'{} = Certificate) ->
     public_key:der_encode('Certificate', Certificate).
 
 -ifdef(TEST).
-create_extensions_test() ->
+create_extensions_test_() ->
     PrivateKey = erl509_private_key:create_rsa(2048),
     PublicKey = erl509_private_key:derive_public_key(PrivateKey),
-    ?assertEqual(moo, create_extensions(#{}, PublicKey, PublicKey)).
+    [
+        % subject_key_identifier and authority_key_identifier are boolean, and control whether the actual identifiers
+        % are added as extensions.
+        ?_assertEqual([], create_extensions(#{}, PublicKey, PublicKey)),
+        ?_assertMatch(
+            [
+                #'Extension'{extnID = ?'id-ce-subjectKeyIdentifier'},
+                #'Extension'{extnID = ?'id-ce-authorityKeyIdentifier'}
+            ],
+            lists:sort(
+                create_extensions(
+                    #{subject_key_identifier => true, authority_key_identifier => true},
+                    PublicKey,
+                    PublicKey
+                )
+            )
+        )
+    ].
 -endif.

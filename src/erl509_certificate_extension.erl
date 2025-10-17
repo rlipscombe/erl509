@@ -14,6 +14,10 @@
 
 -include_lib("public_key/include/public_key.hrl").
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 create_key_usage_extension(KeyUsage) ->
     #'Extension'{
         extnID = ?'id-ce-keyUsage',
@@ -85,3 +89,39 @@ create_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
     crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
 create_key_identifier({#'ECPoint'{point = Point} = _EC, _Parameters}) ->
     crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
+
+-ifdef(TEST).
+all_test_() ->
+    {setup,
+        fun() ->
+            PrivateKey = erl509_private_key:create_rsa(2048),
+            erl509_private_key:derive_public_key(PrivateKey)
+        end,
+        {with, [
+            fun subject_key_identifier/1,
+            fun authority_key_identifier/1
+        ]}}.
+
+subject_key_identifier(PublicKey) ->
+    #'Extension'{
+        extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
+    } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
+    % SubjectKeyIdentifier is just the hash, not a record.
+    SKI = public_key:der_decode('SubjectKeyIdentifier', Value),
+    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), SKI),
+    ok.
+
+authority_key_identifier(PublicKey) ->
+    #'Extension'{
+        extnID = ?'id-ce-authorityKeyIdentifier', critical = false, extnValue = Value
+    } = erl509_certificate_extension:create_authority_key_identifier_extension(PublicKey),
+    % AuthorityKeyIdentifier is a record.
+    #'AuthorityKeyIdentifier'{
+        keyIdentifier = AuthorityKeyIdentifier,
+        authorityCertIssuer = asn1_NOVALUE,
+        authorityCertSerialNumber = asn1_NOVALUE
+    } = public_key:der_decode('AuthorityKeyIdentifier', Value),
+    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), AuthorityKeyIdentifier),
+    ok.
+
+-endif.
