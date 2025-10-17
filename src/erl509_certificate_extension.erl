@@ -84,12 +84,15 @@ to_subject_alt_name(Name) when is_binary(Name) ->
 to_subject_alt_name({_, _} = Name) ->
     Name.
 
+-spec create_subject_key_identifier(erl509_public_key:t()) -> binary().
 create_subject_key_identifier(Key) ->
     create_key_identifier(Key).
 
+-spec create_authority_key_identifier(erl509_public_key:t()) -> #'AuthorityKeyIdentifier'{}.
 create_authority_key_identifier(Key) ->
     #'AuthorityKeyIdentifier'{keyIdentifier = create_key_identifier(Key)}.
 
+-spec create_key_identifier(erl509_public_key:t()) -> binary().
 create_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
     % RFC 5280 says "subject key identifiers SHOULD be derived from the public key or a method that generates unique values".
     %
