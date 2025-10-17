@@ -17,17 +17,17 @@ ca_test() ->
         })
     ),
 
-    % Convert the certificate to 'OTP' format.
-    OTPCert = to_otp(CACert),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(CACert)),
 
     % The certificate should be self-signed.
-    ?assert(pubkey_cert:is_self_signed(OTPCert)),
+    ?assert(pubkey_cert:is_self_signed(Cert)),
 
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm1
-    } = OTPCert,
+    } = Cert,
 
     % Data:
     #'OTPTBSCertificate'{
@@ -182,17 +182,17 @@ server_test() ->
         ServerTemplate
     ),
 
-    % Convert the certificate to 'OTP' format.
-    OTPCert = to_otp(ServerCert),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(CACert)),
 
     % The certificate should NOT be self-signed.
-    ?assertNot(pubkey_cert:is_self_signed(OTPCert)),
+    ?assertNot(pubkey_cert:is_self_signed(Cert)),
 
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm1
-    } = OTPCert,
+    } = Cert,
 
     % Data:
     #'OTPTBSCertificate'{
@@ -359,17 +359,17 @@ client_test() ->
         ClientTemplate
     ),
 
-    % Convert the certificate to 'OTP' format.
-    OTPCert = to_otp(ClientCert),
+    % Round-trip the cert via PEM encoding.
+    Cert = erl509_certificate:from_pem(erl509_certificate:to_pem(CACert)),
 
     % The certificate should NOT be self-signed.
-    ?assertNot(pubkey_cert:is_self_signed(OTPCert)),
+    ?assertNot(pubkey_cert:is_self_signed(Cert)),
 
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm1
-    } = OTPCert,
+    } = Cert,
 
     % Data:
     #'OTPTBSCertificate'{
@@ -489,10 +489,6 @@ client_test() ->
     CAPublicKey = erl509_certificate:get_public_key(CACert),
     ?assert(public_key:pkix_verify(erl509_certificate:to_der(ClientCert), CAPublicKey)),
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.

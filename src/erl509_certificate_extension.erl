@@ -39,9 +39,7 @@ create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyU
     #'Extension'{
         extnID = ?'id-ce-extKeyUsage',
         critical = false,
-        extnValue = public_key:der_encode(
-            'ExtKeyUsageSyntax', ExtendedKeyUsages
-        )
+        extnValue = ExtendedKeyUsages
     }.
 
 create_subject_key_identifier_extension(SubjectPub) ->
@@ -59,9 +57,7 @@ create_authority_key_identifier_extension(IssuerPub) ->
     #'Extension'{
         extnID = ?'id-ce-authorityKeyIdentifier',
         critical = false,
-        extnValue = public_key:der_encode(
-            'AuthorityKeyIdentifier', AuthorityKeyIdentifier
-        )
+        extnValue = AuthorityKeyIdentifier
     }.
 
 create_subject_alt_name_extension(Names) ->

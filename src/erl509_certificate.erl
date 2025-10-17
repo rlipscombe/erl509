@@ -21,6 +21,8 @@
 create_self_signed(PrivateKey, Subject, Options) when
     is_binary(Subject)
 ->
+    PublicKey = erl509_private_key:derive_public_key(PrivateKey),
+
     Options2 = apply_default_options(Options),
     SerialNumber = create_serial_number(Options2),
 
@@ -28,13 +30,11 @@ create_self_signed(PrivateKey, Subject, Options) when
 
     % It's self-signed, so the issuer and subject are the same.
     Issuer = Subject,
-
-    SubjectRdn = erl509_rdn_seq:create(Subject),
     IssuerRdn = erl509_rdn_seq:create(Issuer),
 
-    Validity = create_validity(Options2),
+    SubjectRdn = erl509_rdn_seq:create(Subject),
 
-    PublicKey = erl509_private_key:derive_public_key(PrivateKey),
+    Validity = create_validity(Options2),
 
     SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
 
@@ -42,7 +42,7 @@ create_self_signed(PrivateKey, Subject, Options) when
     Extensions = create_extensions(Extensions0, PublicKey, PublicKey),
 
     % Create the certificate entity. It's an OTPTBSCertificate.
-    TbsCertificate = #'OTPTBSCertificate'{
+    OtpTbsCertificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -55,11 +55,10 @@ create_self_signed(PrivateKey, Subject, Options) when
         extensions = Extensions
     },
 
-    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
-    Signature = public_key:pkix_sign(TbsCertificate, PrivateKey),
+    Signature = public_key:pkix_sign(OtpTbsCertificate, PrivateKey),
 
-    #'Certificate'{
-        tbsCertificate = TbsCertificate,
+    #'OTPCertificate'{
+        tbsCertificate = OtpTbsCertificate,
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
     }.
@@ -72,8 +71,8 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
     IssuerPub = erl509_private_key:derive_public_key(IssuerKey),
 
     % Get Issuer from IssuerCertificate.
-    #'Certificate'{
-        tbsCertificate = #'TBSCertificate'{
+    #'OTPCertificate'{
+        tbsCertificate = #'OTPTBSCertificate'{
             subject = IssuerRdn
         }
     } = IssuerCertificate,
@@ -87,8 +86,8 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
     #{extensions := Extensions0} = Options2,
     Extensions = create_extensions(Extensions0, PublicKey, IssuerPub),
 
-    % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'OTPTBSCertificate'{
+    % Create the certificate entity. It's an OTPTBSCertificate.
+    OtpTbsCertificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -101,14 +100,10 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
         extensions = Extensions
     },
 
-    % We sign the DER-encoded TBSCertificate entity.
-    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
-
-    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
-    Signature = public_key:sign(TbsCertificateDer, sha256, IssuerKey),
+    Signature = public_key:pkix_sign(OtpTbsCertificate, IssuerKey),
 
     #'OTPCertificate'{
-        tbsCertificate = TbsCertificate,
+        tbsCertificate = OtpTbsCertificate,
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
     }.
@@ -207,13 +202,15 @@ from_pem(Pem) when is_binary(Pem) ->
     from_der(Der).
 
 from_der(Der) when is_binary(Der) ->
-    public_key:pkix_decode_cert(Der, plain).
+    public_key:pkix_decode_cert(Der, otp).
 
-to_pem(#'Certificate'{} = Certificate) ->
-    public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
+to_pem(#'OTPCertificate'{} = Certificate) ->
+    public_key:pem_encode([{'Certificate', to_der(Certificate), not_encrypted}]).
 
+to_der(#'OTPCertificate'{} = Certificate) ->
+    public_key:pkix_encode('OTPCertificate', Certificate, otp);
 to_der(#'Certificate'{} = Certificate) ->
-    public_key:der_encode('Certificate', Certificate).
+    public_key:pkix_encode('Certificate', Certificate, plain).
 
 -ifdef(TEST).
 create_extensions_test_() ->
