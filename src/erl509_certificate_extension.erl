@@ -131,7 +131,8 @@ authority_key_identifier(PublicKey) ->
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
     } = public_key:der_decode('AuthorityKeyIdentifier', Value),
-    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), AuthorityKeyIdentifier),
+    ?assertEqual(
+        crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), AuthorityKeyIdentifier
+    ),
     ok.
-
 -endif.
