@@ -168,6 +168,10 @@ create_extensions(Extensions0, SubjectPub, IssuerPub) ->
         Extensions0
     ).
 
+get_public_key(#'OTPCertificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
+    get_public_key(TbsCertificate);
+get_public_key(#'OTPTBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
+    erl509_public_key:unwrap(SubjectPublicKeyInfo);
 get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
     get_public_key(TbsCertificate);
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->

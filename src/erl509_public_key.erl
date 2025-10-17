@@ -58,6 +58,13 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
     }.
 
 unwrap(
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = _},
+        subjectPublicKey = SubjectPublicKey
+    } = _SubjectPublicKeyInfo
+) ->
+    public_key:der_decode('RSAPublicKey', SubjectPublicKey);
+unwrap(
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = _},
         subjectPublicKey = SubjectPublicKey
