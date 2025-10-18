@@ -111,9 +111,35 @@ all_test_() ->
             erl509_private_key:derive_public_key(PrivateKey)
         end,
         {with, [
+            fun basic_constraints_extension_is_ca/1,
+            fun basic_constraints_extension_is_not_ca/1,
             fun subject_key_identifier/1,
             fun authority_key_identifier/1
         ]}}.
+
+basic_constraints_extension_is_ca(_) ->
+    #'Extension'{
+        extnID = ?'id-ce-basicConstraints',
+        critical = true,
+        extnValue = BasicConstraints
+    } =
+        erl509_certificate_extension:create_basic_constraints_extension(true, 3),
+    #'BasicConstraints'{cA = true, pathLenConstraint = 3} = public_key:der_decode(
+        'BasicConstraints', BasicConstraints
+    ),
+    ok.
+
+basic_constraints_extension_is_not_ca(_) ->
+    #'Extension'{
+        extnID = ?'id-ce-basicConstraints',
+        critical = true,
+        extnValue = BasicConstraints
+    } =
+        erl509_certificate_extension:create_basic_constraints_extension(false),
+    #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE} = public_key:der_decode(
+        'BasicConstraints', BasicConstraints
+    ),
+    ok.
 
 subject_key_identifier(PublicKey) ->
     #'Extension'{
