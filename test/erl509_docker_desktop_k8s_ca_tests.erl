@@ -2,7 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
--define(DER_NULL, <<5, 0>>).
+-include("erl509_compat.hrl").
 
 ca_test() ->
     CAPrivateKey = erl509_private_key:create_rsa(2048),

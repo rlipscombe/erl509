@@ -2,13 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -include_lib("public_key/include/public_key.hrl").
--define(DER_NULL, <<5, 0>>).
-
--if(?OTP_RELEASE >= 28).
--define(EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS, {asn1_OPENTYPE, ?DER_NULL}).
--else.
--define(EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS, 'NULL').
--endif.
+-include("erl509_compat.hrl").
 
 self_signed_rsa_test() ->
     RSAPrivateKey = erl509_private_key:create_rsa(2048),
