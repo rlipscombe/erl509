@@ -81,15 +81,13 @@ create_authority_key_identifier(Key) ->
     #'AuthorityKeyIdentifier'{keyIdentifier = create_key_identifier(Key)}.
 
 -spec create_key_identifier(erl509_public_key:t()) -> binary().
-create_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
+create_key_identifier(Key) ->
     % RFC 5280 says "subject key identifiers SHOULD be derived from the public key or a method that generates unique values".
     %
     % It says a common method of doing that is "the 160-bit SHA-1 hash of the value of the BIT STRING subjectPublicKey".
     %
     % So we'll do that.
-    crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
-create_key_identifier({#'ECPoint'{} = Point, _Parameters}) ->
-    crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
+    crypto:hash(sha, erl509_public_key:to_der(Key)).
 
 -ifdef(TEST).
 all_test_() ->

@@ -6,7 +6,9 @@
     unwrap/1,
 
     to_pem/1,
-    to_pem/2
+    to_pem/2,
+
+    to_der/1
 ]).
 
 -export_type([
@@ -39,6 +41,10 @@ to_pem({#'ECPoint'{point = _}, _} = ECPublicKey, _Wrapped, _Opts) ->
     public_key:pem_encode([
         public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
     ]).
+
+to_der({#'ECPoint'{point = _}, _} = PublicKey) ->
+    SubjectPublicKeyInfo = wrap(PublicKey),
+    public_key:der_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo).
 
 wrap(#'RSAPublicKey'{} = RSAPublicKey) ->
     #'SubjectPublicKeyInfo'{

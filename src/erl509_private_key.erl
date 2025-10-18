@@ -54,20 +54,29 @@ to_pem(PrivateKey, Opts) ->
 to_pem(#'RSAPrivateKey'{} = RSAPrivateKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('RSAPrivateKey', RSAPrivateKey)]);
 to_pem(#'RSAPrivateKey'{} = RSAPrivateKey, _Wrapped = true, _Opts) ->
-    PrivateKeyInfo = #'PrivateKeyInfo'{
+    PrivateKeyInfo = wrap(RSAPrivateKey),
+    public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]);
+to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = false, _Opts) ->
+    public_key:pem_encode([public_key:pem_entry_encode('ECPrivateKey', ECPrivateKey)]);
+to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = true, _Opts) ->
+    PrivateKeyInfo = wrap(ECPrivateKey),
+    public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
+
+-spec to_der(PrivateKey :: t()) -> der_encoded().
+to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
+    public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
+
+wrap(#'RSAPrivateKey'{} = RSAPrivateKey) ->
+    #'PrivateKeyInfo'{
         version = 'v1',
         privateKeyAlgorithm = #'PrivateKeyInfo_privateKeyAlgorithm'{
             algorithm = ?'rsaEncryption',
             parameters = {'asn1_OPENTYPE', ?DER_NULL}
         },
         privateKey = public_key:der_encode('RSAPrivateKey', RSAPrivateKey)
-    },
-
-    public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]);
-to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = false, _Opts) ->
-    public_key:pem_encode([public_key:pem_entry_encode('ECPrivateKey', ECPrivateKey)]);
-to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true, _Opts) ->
-    PrivateKeyInfo = #'PrivateKeyInfo'{
+    };
+wrap(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey) ->
+    #'PrivateKeyInfo'{
         version = 'v1',
         privateKeyAlgorithm = #'PrivateKeyInfo_privateKeyAlgorithm'{
             algorithm = ?'id-ecPublicKey',
@@ -76,13 +85,7 @@ to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true,
         privateKey = public_key:der_encode('ECPrivateKey', ECPrivateKey#'ECPrivateKey'{
             parameters = asn1_NOVALUE
         })
-    },
-
-    public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
-
--spec to_der(PrivateKey :: t()) -> der_encoded().
-to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
-    public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
+    }.
 
 -spec from_pem(Pem :: pem_encoded()) -> t().
 from_pem(Pem) when is_binary(Pem) ->
