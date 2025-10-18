@@ -215,8 +215,8 @@ get_extension(
     end.
 
 from_pem(Pem) when is_binary(Pem) ->
-    [Entry = {_, _, not_encrypted}] = public_key:pem_decode(Pem),
-    public_key:pem_entry_decode(Entry).
+    [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
+    from_der(Der).
 
 to_pem(#'Certificate'{} = Certificate) ->
     public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
