@@ -43,7 +43,17 @@ to_pem({#'ECPoint'{point = _}, _} = ECPublicKey, _Wrapped, _Opts) ->
     ]).
 
 to_der(PublicKey) ->
-    SubjectPublicKeyInfo = wrap(PublicKey),
+    to_der(PublicKey, [wrap]).
+
+to_der(PublicKey, Opts) ->
+    case proplists:get_bool(wrap, Opts) of
+        true ->
+            der_encode(wrap(PublicKey));
+        false ->
+            der_encode(PublicKey)
+    end.
+
+der_encode(#'SubjectPublicKeyInfo'{} = SubjectPublicKeyInfo) ->
     public_key:der_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo).
 
 wrap(#'RSAPublicKey'{} = RSAPublicKey) ->
