@@ -146,8 +146,8 @@ subject_key_identifier(PublicKey) ->
         extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
     % SubjectKeyIdentifier is just the hash, not a record.
-    SKI = public_key:der_decode('SubjectKeyIdentifier', Value),
-    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), SKI),
+    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    ?assertEqual(Hash, public_key:der_decode('SubjectKeyIdentifier', Value)),
     ok.
 
 authority_key_identifier(PublicKey) ->
@@ -160,8 +160,7 @@ authority_key_identifier(PublicKey) ->
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
     } = public_key:der_decode('AuthorityKeyIdentifier', Value),
-    ?assertEqual(
-        crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), AuthorityKeyIdentifier
-    ),
+    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    ?assertEqual(Hash, AuthorityKeyIdentifier),
     ok.
 -endif.
