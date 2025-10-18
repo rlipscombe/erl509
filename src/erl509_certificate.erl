@@ -20,8 +20,6 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--define(DER_NULL, <<5, 0>>).
-
 -type t() :: #'Certificate'{}.
 
 -spec create_self_signed(
@@ -140,7 +138,7 @@ get_signature_algorithm(#'RSAPrivateKey'{}) ->
         parameters = 'NULL'
     };
 get_signature_algorithm(#'ECPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+    #'SignatureAlgorithm'{
         algorithm = ?'ecdsa-with-SHA256',
         parameters = asn1_NOVALUE
     }.
@@ -151,10 +149,10 @@ create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
         subjectPublicKey = RSAPublicKey
     };
 create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
-    #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{
             algorithm = ?'id-ecPublicKey',
-            parameters = public_key:der_encode('EcpkParameters', Parameters)
+            parameters = Parameters
         },
         subjectPublicKey = Point
     }.
