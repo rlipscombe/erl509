@@ -68,10 +68,18 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
             algorithm = ?'id-ecPublicKey',
-            parameters = Parameters
+            parameters = maybe_encode_parameters(Parameters)
         },
         subjectPublicKey = Point
     }.
+
+maybe_encode_parameters(Parameters) ->
+    maybe_encode_parameters(Parameters, application:get_key(public_key, vsn)).
+
+maybe_encode_parameters(Parameters, {ok, V}) when V >= "1.18" ->
+    public_key:der_encode('EcpkParameters', Parameters);
+maybe_encode_parameters(Parameters, {ok, _}) ->
+    Parameters.
 
 unwrap(
     #'OTPSubjectPublicKeyInfo'{
