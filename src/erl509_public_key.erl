@@ -9,8 +9,14 @@
     to_pem/2
 ]).
 
+-export_type([
+    t/0
+]).
+
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
+
+-type t() :: #'RSAPublicKey'{} | {#'ECPoint'{}, {namedCurve, _}}.
 
 derive_public_key(PrivateKey) ->
     erl509_private_key:derive_public_key(PrivateKey).
