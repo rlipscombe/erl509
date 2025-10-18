@@ -76,10 +76,14 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
 maybe_encode_parameters(Parameters) ->
     maybe_encode_parameters(Parameters, application:get_key(public_key, vsn)).
 
+maybe_encode_parameters('NULL' = _Parameters, {ok, V}) when V >= "1.18" ->
+    'NULL';
 maybe_encode_parameters(Parameters, {ok, V}) when V >= "1.18" ->
-    public_key:der_encode('EcpkParameters', Parameters);
+    Parameters;
+maybe_encode_parameters('NULL' = _Parameters, {ok, _V}) ->
+    ?DER_NULL;
 maybe_encode_parameters(Parameters, {ok, _}) ->
-    Parameters.
+    public_key:der_encode('EcpkParameters', Parameters).
 
 unwrap(
     #'OTPSubjectPublicKeyInfo'{
