@@ -27,6 +27,7 @@ create_self_signed(PrivateKey, Subject, Options) when
     SerialNumber = create_serial_number(Options2),
 
     SignatureAlgorithm = get_signature_algorithm(PrivateKey),
+    SubjectPub = erl509_private_key:derive_public_key(PrivateKey),
 
     % It's self-signed, so the issuer and subject are the same.
     Issuer = Subject,
@@ -35,46 +36,25 @@ create_self_signed(PrivateKey, Subject, Options) when
     IssuerRdn = erl509_rdn_seq:create(Issuer),
 
     Validity = create_validity(Options2),
-
-    PublicKey = erl509_private_key:derive_public_key(PrivateKey),
-
-    SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
-
     #{extensions := Extensions0} = Options2,
-    Extensions = create_extensions(Extensions0, PublicKey, PublicKey),
+    create_certificate(
+        SubjectPub,
+        SubjectRdn,
+        PrivateKey,
+        IssuerRdn,
+        SerialNumber,
+        Validity,
+        SignatureAlgorithm,
+        Extensions0
+    ).
 
-    % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'TBSCertificate'{
-        version = v3,
-        serialNumber = SerialNumber,
-        signature = SignatureAlgorithm,
-        issuer = IssuerRdn,
-        validity = Validity,
-        subject = SubjectRdn,
-        subjectPublicKeyInfo = SubjectPublicKeyInfo,
-        issuerUniqueID = asn1_NOVALUE,
-        subjectUniqueID = asn1_NOVALUE,
-        extensions = Extensions
-    },
-
-    % We sign the DER-encoded TBSCertificate entity.
-    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
-
-    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
-    Signature = public_key:sign(TbsCertificateDer, sha256, PrivateKey),
-
-    #'Certificate'{
-        tbsCertificate = TbsCertificate,
-        signatureAlgorithm = SignatureAlgorithm,
-        signature = Signature
-    }.
-
-create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
+create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
     Options2 = apply_default_options(Options),
     SerialNumber = create_serial_number(Options2),
 
     SignatureAlgorithm = get_signature_algorithm(IssuerKey),
-    IssuerPub = erl509_private_key:derive_public_key(IssuerKey),
+
+    SubjectRdn = erl509_rdn_seq:create(Subject),
 
     % Get Issuer from IssuerCertificate.
     #'Certificate'{
@@ -83,14 +63,33 @@ create(PublicKey, Subject, IssuerCertificate, IssuerKey, Options) ->
         }
     } = IssuerCertificate,
 
-    SubjectRdn = erl509_rdn_seq:create(Subject),
-
     Validity = create_validity(Options2),
-
-    SubjectPublicKeyInfo = create_subject_public_key_info(PublicKey),
-
     #{extensions := Extensions0} = Options2,
-    Extensions = create_extensions(Extensions0, PublicKey, IssuerPub),
+    create_certificate(
+        SubjectPub,
+        SubjectRdn,
+        IssuerKey,
+        IssuerRdn,
+        SerialNumber,
+        Validity,
+        SignatureAlgorithm,
+        Extensions0
+    ).
+
+create_certificate(
+    SubjectPub,
+    SubjectRdn,
+    IssuerKey,
+    IssuerRdn,
+    SerialNumber,
+    Validity,
+    SignatureAlgorithm,
+    Extensions0
+) ->
+    SubjectPublicKeyInfo = create_subject_public_key_info(SubjectPub),
+    IssuerPub = erl509_private_key:derive_public_key(IssuerKey),
+
+    Extensions = create_extensions(Extensions0, SubjectPub, IssuerPub),
 
     % Create the certificate entity. It's a TBSCertificate.
     TbsCertificate = #'TBSCertificate'{
