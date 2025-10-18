@@ -6,7 +6,7 @@ cn_test() ->
     ?assertEqual(
         {rdnSequence, [
             [
-                {'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}
+                {'AttributeTypeAndValue', ?'id-at-commonName', {printableString, <<"example">>}}
             ]
         ]},
         erl509_rdn_seq:create("CN=example")
@@ -17,11 +17,11 @@ docker_desktop_test() ->
         {rdnSequence, [
             [
                 {'AttributeTypeAndValue', ?'id-at-organizationName',
-                    {printableString, "system:masters"}}
+                    {printableString, <<"system:masters">>}}
             ],
             [
                 {'AttributeTypeAndValue', ?'id-at-commonName',
-                    {printableString, "docker-for-desktop"}}
+                    {printableString, <<"docker-for-desktop">>}}
             ]
         ]},
         erl509_rdn_seq:create(<<"O=system:masters, CN=docker-for-desktop">>)
