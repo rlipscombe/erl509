@@ -20,6 +20,12 @@
 
 -define(DER_NULL, <<5, 0>>).
 
+-type t() :: #'Certificate'{}.
+
+-spec create_self_signed(
+    PrivateKey :: erl509_private_key:t(), Subject :: binary(), Options :: map()
+) -> t().
+
 create_self_signed(PrivateKey, Subject, Options) when
     is_binary(Subject)
 ->

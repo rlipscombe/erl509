@@ -16,23 +16,34 @@
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
 
+-type t() :: #'RSAPrivateKey'{} | #'ECPrivateKey'{}.
+-type oid() :: tuple().
+-type pem_encoded() :: binary().
+-type der_encoded() :: binary().
+
+-spec create_rsa(ModulusSize :: non_neg_integer()) -> t().
 create_rsa(ModulusSize) ->
     create_rsa(ModulusSize, 65537).
 
+-spec create_rsa(ModulusSize :: non_neg_integer(), PublicExponent :: non_neg_integer()) -> t().
 create_rsa(ModulusSize, PublicExponent) ->
-    public_key:generate_key({rsa, ModulusSize, PublicExponent}).
+    #'RSAPrivateKey'{} = public_key:generate_key({rsa, ModulusSize, PublicExponent}).
 
+-spec create_ec(Curve :: oid() | atom()) -> t().
 create_ec(Curve) ->
-    public_key:generate_key({namedCurve, Curve}).
+    #'ECPrivateKey'{} = public_key:generate_key({namedCurve, Curve}).
 
+-spec derive_public_key(Key :: t()) -> erl509_public_key:t().
 derive_public_key(#'RSAPrivateKey'{modulus = Modulus, publicExponent = PublicExponent}) ->
     #'RSAPublicKey'{modulus = Modulus, publicExponent = PublicExponent};
 derive_public_key(#'ECPrivateKey'{publicKey = Point, parameters = Parameters}) ->
     {#'ECPoint'{point = Point}, Parameters}.
 
+-spec to_pem(PrivateKey :: t()) -> pem_encoded().
 to_pem(PrivateKey) ->
     to_pem(PrivateKey, []).
 
+-spec to_pem(PrivateKey :: t(), Opts :: [wrap]) -> pem_encoded().
 to_pem(PrivateKey, Opts) ->
     to_pem(PrivateKey, proplists:get_bool(wrap, Opts), Opts).
 
@@ -65,9 +76,11 @@ to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true,
 
     public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
 
+-spec to_der(PrivateKey :: t()) -> der_encoded().
 to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
     public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
 
+-spec from_pem(Pem :: pem_encoded()) -> t().
 from_pem(Pem) when is_binary(Pem) ->
     Entries = public_key:pem_decode(Pem),
     {value, Entry} = lists:search(
@@ -79,4 +92,7 @@ from_pem(Pem) when is_binary(Pem) ->
         end,
         Entries
     ),
-    public_key:pem_entry_decode(Entry).
+    delete_type_(public_key:pem_entry_decode(Entry)).
+
+% Suppress eqwalizer warnings.
+delete_type_(Value) -> Value.
