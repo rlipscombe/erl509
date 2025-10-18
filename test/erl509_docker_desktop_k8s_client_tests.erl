@@ -2,6 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
+-define(DER_NULL, <<5, 0>>).
 
 client_test() ->
     % Create the CA certificate.
@@ -75,7 +76,7 @@ client_test() ->
 
     % Signature Algorithm: sha256WithRSAEncryption
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
         SignatureAlgorithm1
     ),
 
@@ -161,7 +162,7 @@ client_test() ->
 
     % Signature Algorithm: sha256WithRSAEncryption
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
         SignatureAlgorithm2
     ),
 

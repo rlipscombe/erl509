@@ -1,6 +1,8 @@
 -module(erl509_certificate_tests).
 -include_lib("eunit/include/eunit.hrl").
+
 -include_lib("public_key/include/public_key.hrl").
+-define(DER_NULL, <<5, 0>>).
 
 self_signed_rsa_test() ->
     RSAPrivateKey = erl509_private_key:create_rsa(2048),
@@ -46,7 +48,7 @@ self_signed_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{
@@ -202,7 +204,7 @@ server_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{

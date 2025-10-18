@@ -2,6 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
+-define(DER_NULL, <<5, 0>>).
 
 ca_test() ->
     CAPrivateKey = erl509_private_key:create_rsa(2048),
@@ -50,7 +51,7 @@ ca_test() ->
 
     % Signature Algorithm: sha256WithRSAEncryption
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
         SignatureAlgorithm1
     ),
 
@@ -117,7 +118,7 @@ ca_test() ->
 
     % Signature Algorithm: sha256WithRSAEncryption
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
         SignatureAlgorithm2
     ),
 

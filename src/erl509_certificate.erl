@@ -16,6 +16,8 @@
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
+-define(DER_NULL, <<5, 0>>).
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
@@ -131,7 +133,7 @@ create_validity(#{validity := ExpiryDays} = _Options) ->
 get_signature_algorithm(#'RSAPrivateKey'{}) ->
     #'SignatureAlgorithm'{
         algorithm = ?sha256WithRSAEncryption,
-        parameters = 'NULL'
+        parameters = {'asn1_OPENTYPE', ?DER_NULL}
     };
 get_signature_algorithm(#'ECPrivateKey'{}) ->
     #'SignatureAlgorithm'{
