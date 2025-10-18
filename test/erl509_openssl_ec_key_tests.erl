@@ -7,6 +7,11 @@ ec_from_pem_test() ->
     Pem = read_file("openssl-ec.key"),
     Key = erl509_private_key:from_pem(Pem),
     ?assertEqual(expected_key(), Key),
+
+    % Do we write the same thing back out?
+    ?assertEqual(
+        get_ec_private_key_from_pem(Pem), strip_trailing_lf(erl509_private_key:to_pem(Key, []))
+    ),
     ok.
 
 ec_from_pkcs8_pem_test() ->
@@ -14,12 +19,29 @@ ec_from_pkcs8_pem_test() ->
     Pem = read_file("openssl-ec-p8.key"),
     Key = erl509_private_key:from_pem(Pem),
     ?assertEqual(expected_key(), Key),
+
+    % Do we write the same thing back out?
+    ?assertEqual(Pem, strip_trailing_lf(erl509_private_key:to_pem(Key, [wrap]))),
     ok.
 
 read_file(Name) ->
     Path = filename:join(["test", atom_to_list(?MODULE), Name]),
     {ok, Data} = file:read_file(Path),
     Data.
+
+% openssl puts one LF at the end; Erlang puts two.
+strip_trailing_lf(Bytes) ->
+    binary:part(Bytes, 0, byte_size(Bytes) - 1).
+
+% openssl puts EC PARAMETERS at the start; skip over that.
+get_ec_private_key_from_pem(Pem) ->
+    Lines = binary:split(Pem, <<"\n">>, [global]),
+    get_ec_private_key_from_pem2(Lines).
+
+get_ec_private_key_from_pem2([<<"-----BEGIN EC PRIVATE KEY-----">> = Line | Rest]) ->
+    iolist_to_binary(lists:join(<<"\n">>, [Line | Rest]));
+get_ec_private_key_from_pem2([_ | Rest]) ->
+    get_ec_private_key_from_pem2(Rest).
 
 expected_key() ->
     #'ECPrivateKey'{
