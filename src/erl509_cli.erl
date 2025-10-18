@@ -9,7 +9,12 @@ main(Args) ->
                 arguments => [
                     #{name => out_cert, long => "-out-cert", required => true},
                     #{name => out_key, long => "-out-key", required => true},
-                    #{name => template, long => "-template", required => true},
+                    #{
+                        name => template,
+                        long => "-template",
+                        required => true,
+                        type => {atom, [root_ca, server]}
+                    },
                     #{name => subject, long => "-subject", required => true, type => binary}
                 ]
             },
@@ -21,7 +26,12 @@ main(Args) ->
                     #{name => issuer_key, long => "-issuer-key", required => true},
                     #{name => out_cert, long => "-out-cert", required => true},
                     #{name => out_key, long => "-out-key", required => true},
-                    #{name => template, long => "-template", required => true},
+                    #{
+                        name => template,
+                        long => "-template",
+                        required => true,
+                        type => {atom, [root_ca, server]}
+                    },
                     #{name => subject, long => "-subject", required => true, type => binary}
                 ]
             }
@@ -53,7 +63,7 @@ create_cert(Args = #{issuer_cert := IssuerCertFile, issuer_key := IssuerKeyFile,
     ),
     ok = file:write_file(OutCert, erl509_certificate:to_pem(Certificate)).
 
-get_certificate_options(#{template := "root_ca"}) ->
+get_certificate_options(#{template := root_ca}) ->
     erl509_certificate_template:root_ca();
-get_certificate_options(#{template := "server"}) ->
+get_certificate_options(#{template := server}) ->
     erl509_certificate_template:server().
