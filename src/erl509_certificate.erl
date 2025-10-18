@@ -146,9 +146,9 @@ get_signature_algorithm(#'ECPrivateKey'{}) ->
     }.
 
 create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
-    #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = ?DER_NULL},
-        subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = 'NULL'},
+        subjectPublicKey = RSAPublicKey
     };
 create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
     #'SubjectPublicKeyInfo'{
