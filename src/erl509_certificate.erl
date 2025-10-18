@@ -135,9 +135,9 @@ create_validity(#{validity := ExpiryDays} = _Options) ->
     }.
 
 get_signature_algorithm(#'RSAPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+    #'SignatureAlgorithm'{
         algorithm = ?sha256WithRSAEncryption,
-        parameters = ?DER_NULL
+        parameters = 'NULL'
     };
 get_signature_algorithm(#'ECPrivateKey'{}) ->
     #'AlgorithmIdentifier'{
