@@ -2,15 +2,15 @@
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
 
-%% Generate an EC key with openssl; can we read it in?
-%% XXX: No, not right now.
 ec_from_pem_test() ->
+    % We generated an EC key with openssl; can we read it in?
     Pem = read_file("openssl-ec.key"),
-    _ = erl509_private_key:from_pem(Pem),
+    Key = erl509_private_key:from_pem(Pem),
+    ?assertEqual(expected_key(), Key),
     ok.
 
-%% Generate an EC key with openssl, wrap it in PKCS#8; can we read it in?
 ec_from_pkcs8_pem_test() ->
+    % Wrapped in PKCS#8; can we read it in?
     Pem = read_file("openssl-ec-p8.key"),
     Key = erl509_private_key:from_pem(Pem),
     ?assertEqual(expected_key(), Key),
