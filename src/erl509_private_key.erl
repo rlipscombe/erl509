@@ -34,7 +34,7 @@ to_pem(PrivateKey) ->
     to_pem(PrivateKey, []).
 
 to_pem(PrivateKey, Opts) ->
-    to_pem(PrivateKey, proplists:get_bool(wrapped, Opts), Opts).
+    to_pem(PrivateKey, proplists:get_bool(wrap, Opts), Opts).
 
 to_pem(#'RSAPrivateKey'{} = RSAPrivateKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('RSAPrivateKey', RSAPrivateKey)]);
@@ -51,14 +51,16 @@ to_pem(#'RSAPrivateKey'{} = RSAPrivateKey, _Wrapped = true, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]);
 to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('ECPrivateKey', ECPrivateKey)]);
-to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = true, _Opts) ->
+to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true, _Opts) ->
     PrivateKeyInfo = #'PrivateKeyInfo'{
         version = 'v1',
         privateKeyAlgorithm = #'PrivateKeyInfo_privateKeyAlgorithm'{
-            algorithm = ?'rsaEncryption',
-            parameters = {'asn1_OPENTYPE', ?DER_NULL}
+            algorithm = ?'id-ecPublicKey',
+            parameters = {'asn1_OPENTYPE', public_key:der_encode('EcpkParameters', Parameters)}
         },
-        privateKey = public_key:der_encode('ECPrivateKey', ECPrivateKey)
+        privateKey = public_key:der_encode('ECPrivateKey', ECPrivateKey#'ECPrivateKey'{
+            parameters = asn1_NOVALUE
+        })
     },
 
     public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
@@ -67,10 +69,14 @@ to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
     public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
 
 from_pem(Pem) when is_binary(Pem) ->
-    [Entry = {_, _, not_encrypted}] = public_key:pem_decode(Pem),
-    case public_key:pem_entry_decode(Entry) of
-        #'OneAsymmetricKey'{privateKey = Der} ->
-            public_key:der_decode('ECPrivateKey', Der);
-        Key ->
-            Key
-    end.
+    Entries = public_key:pem_decode(Pem),
+    {value, Entry} = lists:search(
+        fun
+            ({'RSAPrivateKey', _, not_encrypted}) -> true;
+            ({'PrivateKeyInfo', _, not_encrypted}) -> true;
+            ({'ECPrivateKey', _, not_encrypted}) -> true;
+            (_) -> false
+        end,
+        Entries
+    ),
+    public_key:pem_entry_decode(Entry).

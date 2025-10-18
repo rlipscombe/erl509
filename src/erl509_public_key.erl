@@ -19,7 +19,7 @@ to_pem(PublicKey) ->
     to_pem(PublicKey, []).
 
 to_pem(PublicKey, Opts) ->
-    to_pem(PublicKey, proplists:get_bool(wrapped, Opts), Opts).
+    to_pem(PublicKey, proplists:get_bool(wrap, Opts), Opts).
 
 to_pem(#'RSAPublicKey'{} = RSAPublicKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('RSAPublicKey', RSAPublicKey)]);
