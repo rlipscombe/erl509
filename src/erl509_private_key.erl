@@ -13,6 +13,10 @@
     from_pem/1
 ]).
 
+-export_type([
+    t/0
+]).
+
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
 
