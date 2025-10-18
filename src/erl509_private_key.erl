@@ -34,7 +34,7 @@ to_pem(PrivateKey) ->
     to_pem(PrivateKey, []).
 
 to_pem(PrivateKey, Opts) ->
-    to_pem(PrivateKey, proplists:get_bool(wrapped, Opts), Opts).
+    to_pem(PrivateKey, proplists:get_bool(wrap, Opts), Opts).
 
 to_pem(#'RSAPrivateKey'{} = RSAPrivateKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('RSAPrivateKey', RSAPrivateKey)]);

@@ -6,7 +6,7 @@ rsa_test() ->
     RSAPublicKey = erl509_public_key:derive_public_key(RSAPrivateKey),
     PEM = erl509_public_key:to_pem(RSAPublicKey),
     ?assertMatch(<<"-----BEGIN RSA PUBLIC KEY-----\n", _Rest/binary>>, PEM),
-    WrappedPEM = erl509_public_key:to_pem(RSAPublicKey, [wrapped]),
+    WrappedPEM = erl509_public_key:to_pem(RSAPublicKey, [wrap]),
     ?assertMatch(<<"-----BEGIN PUBLIC KEY-----\n", _Rest/binary>>, WrappedPEM),
     ok.
 
@@ -16,6 +16,6 @@ ec_test() ->
     % EC public keys are always wrapped.
     PEM = erl509_public_key:to_pem(ECPublicKey),
     ?assertMatch(<<"-----BEGIN PUBLIC KEY-----\n", _Rest/binary>>, PEM),
-    WrappedPEM = erl509_public_key:to_pem(ECPublicKey, [wrapped]),
+    WrappedPEM = erl509_public_key:to_pem(ECPublicKey, [wrap]),
     ?assertMatch(<<"-----BEGIN PUBLIC KEY-----\n", _Rest/binary>>, WrappedPEM),
     ok.
