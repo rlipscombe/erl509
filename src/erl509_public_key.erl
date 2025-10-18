@@ -42,7 +42,7 @@ to_pem({#'ECPoint'{point = _}, _} = ECPublicKey, _Wrapped, _Opts) ->
         public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
     ]).
 
-to_der({#'ECPoint'{point = _}, _} = PublicKey) ->
+to_der(PublicKey) ->
     SubjectPublicKeyInfo = wrap(PublicKey),
     public_key:der_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo).
 
