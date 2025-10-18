@@ -63,11 +63,7 @@ create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
     SubjectRdn = erl509_rdn_seq:create(Subject),
 
     % Get Issuer from IssuerCertificate.
-    #'Certificate'{
-        tbsCertificate = #'TBSCertificate'{
-            subject = IssuerRdn
-        }
-    } = IssuerCertificate,
+    IssuerRdn = get_issuer_rdn(IssuerCertificate),
 
     Validity = create_validity(Options2),
     #{extensions := Extensions0} = Options2,
@@ -148,13 +144,13 @@ create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
         algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = 'NULL'},
         subjectPublicKey = RSAPublicKey
     };
-create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
+create_subject_public_key_info({#'ECPoint'{} = ECPoint, Parameters}) ->
     #'OTPSubjectPublicKeyInfo'{
         algorithm = #'PublicKeyAlgorithm'{
             algorithm = ?'id-ecPublicKey',
             parameters = Parameters
         },
-        subjectPublicKey = Point
+        subjectPublicKey = ECPoint
     }.
 
 -spec create_extensions(
@@ -190,6 +186,11 @@ get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) -
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
     erl509_public_key:unwrap(SubjectPublicKeyInfo).
 
+get_issuer_rdn(#'OTPCertificate'{tbsCertificate = TbsCertificate}) ->
+    get_issuer_rdn(TbsCertificate);
+get_issuer_rdn(#'OTPTBSCertificate'{subject = IssuerRdn}) ->
+    IssuerRdn.
+
 get_extension(
     #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
 ) ->
@@ -205,14 +206,16 @@ from_pem(Pem) when is_binary(Pem) ->
     [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
     from_der(Der).
 
-to_pem(#'Certificate'{} = Certificate) ->
-    public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
+to_pem(Certificate) ->
+    public_key:pem_encode([{'Certificate', to_der(Certificate), not_encrypted}]).
 
+to_der(#'OTPCertificate'{} = Certificate) ->
+    public_key:pkix_encode('OTPCertificate', Certificate, otp);
 to_der(#'Certificate'{} = Certificate) ->
-    public_key:der_encode('Certificate', Certificate).
+    public_key:pkix_encode('Certificate', Certificate, plain).
 
 from_der(Der) when is_binary(Der) ->
-    public_key:pkix_decode_cert(Der, plain).
+    public_key:pkix_decode_cert(Der, otp).
 
 -ifdef(TEST).
 create_extensions_test_() ->
