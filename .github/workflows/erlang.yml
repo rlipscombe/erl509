@@ -9,8 +9,9 @@ permissions:
 
 jobs:
   build:
-    continue-on-error: true
+    continue-on-error: false
     strategy:
+      fail-fast: false
       matrix:
         erlang:
           - "27.3.4"
