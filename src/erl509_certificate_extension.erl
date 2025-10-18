@@ -84,12 +84,15 @@ to_subject_alt_name(Name) when is_binary(Name) ->
 to_subject_alt_name({_, _} = Name) ->
     Name.
 
+-spec create_subject_key_identifier(erl509_public_key:t()) -> binary().
 create_subject_key_identifier(Key) ->
     create_key_identifier(Key).
 
+-spec create_authority_key_identifier(erl509_public_key:t()) -> #'AuthorityKeyIdentifier'{}.
 create_authority_key_identifier(Key) ->
     #'AuthorityKeyIdentifier'{keyIdentifier = create_key_identifier(Key)}.
 
+-spec create_key_identifier(erl509_public_key:t()) -> binary().
 create_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
     % RFC 5280 says "subject key identifiers SHOULD be derived from the public key or a method that generates unique values".
     %
@@ -108,17 +111,43 @@ all_test_() ->
             erl509_private_key:derive_public_key(PrivateKey)
         end,
         {with, [
+            fun basic_constraints_extension_is_ca/1,
+            fun basic_constraints_extension_is_not_ca/1,
             fun subject_key_identifier/1,
             fun authority_key_identifier/1
         ]}}.
+
+basic_constraints_extension_is_ca(_) ->
+    #'Extension'{
+        extnID = ?'id-ce-basicConstraints',
+        critical = true,
+        extnValue = BasicConstraints
+    } =
+        erl509_certificate_extension:create_basic_constraints_extension(true, 3),
+    #'BasicConstraints'{cA = true, pathLenConstraint = 3} = public_key:der_decode(
+        'BasicConstraints', BasicConstraints
+    ),
+    ok.
+
+basic_constraints_extension_is_not_ca(_) ->
+    #'Extension'{
+        extnID = ?'id-ce-basicConstraints',
+        critical = true,
+        extnValue = BasicConstraints
+    } =
+        erl509_certificate_extension:create_basic_constraints_extension(false),
+    #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE} = public_key:der_decode(
+        'BasicConstraints', BasicConstraints
+    ),
+    ok.
 
 subject_key_identifier(PublicKey) ->
     #'Extension'{
         extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
     % SubjectKeyIdentifier is just the hash, not a record.
-    SKI = public_key:der_decode('SubjectKeyIdentifier', Value),
-    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), SKI),
+    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    ?assertEqual(Hash, public_key:der_decode('SubjectKeyIdentifier', Value)),
     ok.
 
 authority_key_identifier(PublicKey) ->
@@ -131,7 +160,7 @@ authority_key_identifier(PublicKey) ->
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
     } = public_key:der_decode('AuthorityKeyIdentifier', Value),
-    ?assertEqual(crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)), AuthorityKeyIdentifier),
+    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    ?assertEqual(Hash, AuthorityKeyIdentifier),
     ok.
-
 -endif.
