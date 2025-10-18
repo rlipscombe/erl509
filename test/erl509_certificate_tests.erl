@@ -227,7 +227,7 @@ server_rsa_test() ->
 
     {NotBefore, NotAfter} = parse_validity(Validity),
     ?assert(NotBefore =< erlang:system_time(second)),
-    ?assertEqual(1 * 365 * 24 * 60 * 60, NotAfter - NotBefore),
+    ?assertEqual(365 * 24 * 60 * 60, NotAfter - NotBefore),
 
     ?assertEqual(5, length(Extensions)),
     % lists:search(fun(moo) -> false end, Extensions),
