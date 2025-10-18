@@ -99,8 +99,8 @@ create_certificate(
 
     Extensions = create_extensions(Extensions0, SubjectPub, IssuerPub),
 
-    % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'TBSCertificate'{
+    % Create the certificate entity. It's an OTPTBSCertificate.
+    Certificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -113,17 +113,7 @@ create_certificate(
         extensions = Extensions
     },
 
-    % We sign the DER-encoded TBSCertificate entity.
-    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
-
-    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
-    Signature = public_key:sign(TbsCertificateDer, sha256, IssuerKey),
-
-    #'Certificate'{
-        tbsCertificate = TbsCertificate,
-        signatureAlgorithm = SignatureAlgorithm,
-        signature = Signature
-    }.
+    from_der(public_key:pkix_sign(Certificate, IssuerKey)).
 
 apply_default_options(Options) ->
     DefaultOptions = #{serial_number => random, validity => 365, extensions => #{}},
