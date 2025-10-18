@@ -202,17 +202,16 @@ get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) -
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
     erl509_public_key:unwrap(SubjectPublicKeyInfo).
 
-get_extension(#'Certificate'{} = Certificate, ExtnID) ->
-    % TODO: voltone/x509 uses OTPCertificate as the internal representation; we should do the same.
-    OTPCert = public_key:pkix_decode_cert(public_key:der_encode('Certificate', Certificate), otp),
-    get_extension(OTPCert, ExtnID);
 get_extension(
     #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
 ) ->
     case lists:search(fun(#'Extension'{extnID = ID}) -> ID == ExtnID end, Extensions) of
         {value, Extension} -> Extension;
         false -> undefined
-    end.
+    end;
+get_extension(#'Certificate'{} = Certificate, ExtnID) ->
+    OTPCert = public_key:pkix_decode_cert(to_der(Certificate), otp),
+    get_extension(OTPCert, ExtnID).
 
 from_pem(Pem) when is_binary(Pem) ->
     [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
