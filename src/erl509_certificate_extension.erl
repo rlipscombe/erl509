@@ -42,6 +42,7 @@ create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyU
         extnValue = ExtendedKeyUsages
     }.
 
+-spec create_subject_key_identifier_extension(SubjectPub :: erl509_public_key:t()) -> #'Extension'{}.
 create_subject_key_identifier_extension(SubjectPub) ->
     % The subjectKeyIdentifier (and authorityKeyIdentifier) extensions are used (instead of the name) to build the
     % certificate path.
@@ -52,6 +53,7 @@ create_subject_key_identifier_extension(SubjectPub) ->
         extnValue = SubjectKeyIdentifier
     }.
 
+-spec create_authority_key_identifier_extension(IssuerPub :: erl509_public_key:t()) -> #'Extension'{}.
 create_authority_key_identifier_extension(IssuerPub) ->
     AuthorityKeyIdentifier = create_authority_key_identifier(IssuerPub),
     #'Extension'{
@@ -130,7 +132,7 @@ subject_key_identifier(PublicKey) ->
         extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
     % SubjectKeyIdentifier is just the hash, not a record.
-    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    Hash = crypto:hash(sha, erl509_public_key:to_der(PublicKey)),
     ?assertEqual(Hash, Value),
     ok.
 
@@ -144,7 +146,7 @@ authority_key_identifier(PublicKey) ->
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
     } = Value,
-    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    Hash = crypto:hash(sha, erl509_public_key:to_der(PublicKey)),
     ?assertEqual(Hash, AuthorityKeyIdentifier),
     ok.
 -endif.

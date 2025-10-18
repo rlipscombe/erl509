@@ -52,6 +52,21 @@ ec_to_der_test() ->
             106, 120, 21, 108, 106, 114, 88, 44, 158, 60, 101, 120, 82, 46, 167, 74, 154, 37, 141,
             168, 133, 187, 3, 77, 231, 159, 235, 143, 210, 73, 212, 38, 129, 42, 109, 119, 12, 119,
             56, 10, 111, 9, 189, 111, 139, 76, 74>>,
+    SKIExt =
+        {'Extension', {2, 5, 29, 14}, false,
+            <<195, 125, 240, 157, 127, 119, 219, 132, 213, 149, 125, 69, 115, 160, 106, 85, 90, 57,
+                149, 29>>},
+    AKIExt =
+        {'Extension', {2, 5, 29, 35}, false,
+            {'AuthorityKeyIdentifier',
+                <<195, 125, 240, 157, 127, 119, 219, 132, 213, 149, 125, 69, 115, 160, 106, 85, 90,
+                    57, 149, 29>>,
+                asn1_NOVALUE, asn1_NOVALUE}},
+
     ?assertEqual(Pub, erl509_private_key:derive_public_key(Key)),
     ?assertEqual(Der, erl509_public_key:to_der(Pub)),
+    ?assertEqual(SKIExt, erl509_certificate_extension:create_subject_key_identifier_extension(Pub)),
+    ?assertEqual(
+        AKIExt, erl509_certificate_extension:create_authority_key_identifier_extension(Pub)
+    ),
     ok.
