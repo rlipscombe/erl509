@@ -4,6 +4,12 @@
 -include_lib("public_key/include/public_key.hrl").
 -define(DER_NULL, <<5, 0>>).
 
+-if(?OTP_RELEASE >= 28).
+-define(EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS, {asn1_OPENTYPE, ?DER_NULL}).
+-else.
+-define(EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS, 'NULL').
+-endif.
+
 self_signed_rsa_test() ->
     RSAPrivateKey = erl509_private_key:create_rsa(2048),
     RSAPublicKey = erl509_private_key:derive_public_key(RSAPrivateKey),
@@ -48,7 +54,7 @@ self_signed_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS},
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{
@@ -204,7 +210,7 @@ server_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = {asn1_OPENTYPE, ?DER_NULL}},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS},
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{
