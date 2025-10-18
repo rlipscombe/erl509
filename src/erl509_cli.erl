@@ -46,7 +46,15 @@ self_signed(Args = #{out_cert := OutCert, out_key := OutKey, subject := Subject}
     Certificate = erl509_certificate:create_self_signed(PrivateKey, Subject, Options),
     ok = file:write_file(OutCert, erl509_certificate:to_pem(Certificate)).
 
-create_cert(Args = #{issuer_cert := IssuerCertFile, issuer_key := IssuerKeyFile, out_cert := OutCert, out_key := OutKey, subject := Subject}) ->
+create_cert(
+    Args = #{
+        issuer_cert := IssuerCertFile,
+        issuer_key := IssuerKeyFile,
+        out_cert := OutCert,
+        out_key := OutKey,
+        subject := Subject
+    }
+) ->
     PrivateKey = erl509_private_key:create_rsa(2048),
     PublicKey = erl509_public_key:derive_public_key(PrivateKey),
     ok = file:write_file(OutKey, erl509_private_key:to_pem(PrivateKey)),
