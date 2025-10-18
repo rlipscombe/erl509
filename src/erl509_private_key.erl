@@ -58,7 +58,9 @@ to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true,
             algorithm = ?'id-ecPublicKey',
             parameters = {'asn1_OPENTYPE', public_key:der_encode('EcpkParameters', Parameters)}
         },
-        privateKey = public_key:der_encode('ECPrivateKey', ECPrivateKey)
+        privateKey = public_key:der_encode('ECPrivateKey', ECPrivateKey#'ECPrivateKey'{
+            parameters = asn1_NOVALUE
+        })
     },
 
     public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]).
