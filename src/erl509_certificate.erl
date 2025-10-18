@@ -8,9 +8,11 @@
     get_extension/2
 ]).
 -export([
-    from_pem/1,
     to_pem/1,
-    to_der/1
+    from_pem/1,
+
+    to_der/1,
+    from_der/1
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
@@ -213,14 +215,17 @@ get_extension(
     end.
 
 from_pem(Pem) when is_binary(Pem) ->
-    [Entry = {_, _, not_encrypted}] = public_key:pem_decode(Pem),
-    public_key:pem_entry_decode(Entry).
+    [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
+    from_der(Der).
 
 to_pem(#'Certificate'{} = Certificate) ->
     public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
 
 to_der(#'Certificate'{} = Certificate) ->
     public_key:der_encode('Certificate', Certificate).
+
+from_der(Der) when is_binary(Der) ->
+    public_key:pkix_decode_cert(Der, plain).
 
 -ifdef(TEST).
 create_extensions_test_() ->
@@ -229,7 +234,6 @@ create_extensions_test_() ->
     [
         % subject_key_identifier and authority_key_identifier are boolean, and control whether the actual identifiers
         % are added as extensions.
-        ?_assertEqual([], create_extensions(#{}, PublicKey, PublicKey)),
         ?_assertMatch(
             [
                 #'Extension'{extnID = ?'id-ce-subjectKeyIdentifier'},
@@ -242,6 +246,8 @@ create_extensions_test_() ->
                     PublicKey
                 )
             )
-        )
+        ),
+        % here we omit them.
+        ?_assertEqual([], create_extensions(#{}, PublicKey, PublicKey))
     ].
 -endif.
