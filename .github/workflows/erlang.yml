@@ -11,10 +11,16 @@ permissions:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        erlang:
+          - "27.3.4"
+          - "28.1"
+
     runs-on: ubuntu-latest
 
     container:
-      image: erlang:27.3.4
+      image: erlang:${{ matrix.erlang }}
 
     steps:
     - uses: actions/checkout@v4
