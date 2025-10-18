@@ -58,6 +58,13 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
     }.
 
 unwrap(
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = _},
+        subjectPublicKey = SubjectPublicKey
+    } = _SubjectPublicKeyInfo
+) ->
+    SubjectPublicKey;
+unwrap(
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = _},
         subjectPublicKey = SubjectPublicKey
