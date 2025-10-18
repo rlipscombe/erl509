@@ -51,12 +51,12 @@ to_pem(#'RSAPrivateKey'{} = RSAPrivateKey, _Wrapped = true, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('PrivateKeyInfo', PrivateKeyInfo)]);
 to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = false, _Opts) ->
     public_key:pem_encode([public_key:pem_entry_encode('ECPrivateKey', ECPrivateKey)]);
-to_pem(#'ECPrivateKey'{} = ECPrivateKey, _Wrapped = true, _Opts) ->
+to_pem(#'ECPrivateKey'{parameters = Parameters} = ECPrivateKey, _Wrapped = true, _Opts) ->
     PrivateKeyInfo = #'PrivateKeyInfo'{
         version = 'v1',
         privateKeyAlgorithm = #'PrivateKeyInfo_privateKeyAlgorithm'{
-            algorithm = ?'rsaEncryption',
-            parameters = {'asn1_OPENTYPE', ?DER_NULL}
+            algorithm = ?'id-ecPublicKey',
+            parameters = {'asn1_OPENTYPE', public_key:der_encode('EcpkParameters', Parameters)}
         },
         privateKey = public_key:der_encode('ECPrivateKey', ECPrivateKey)
     },
