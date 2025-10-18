@@ -32,7 +32,7 @@ create_basic_constraints_extension(IsCA, PathLenConstraint) ->
     #'Extension'{
         extnID = ?'id-ce-basicConstraints',
         critical = true,
-        extnValue = #'BasicConstraints'{                cA = IsCA, pathLenConstraint = PathLenConstraint            }
+        extnValue = #'BasicConstraints'{cA = IsCA, pathLenConstraint = PathLenConstraint}
     }.
 
 create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyUsages) ->
@@ -106,26 +106,24 @@ all_test_() ->
         ]}}.
 
 basic_constraints_extension_is_ca(_) ->
-    #'Extension'{
-        extnID = ?'id-ce-basicConstraints',
-        critical = true,
-        extnValue = BasicConstraints
-    } =
-        erl509_certificate_extension:create_basic_constraints_extension(true, 3),
-    #'BasicConstraints'{cA = true, pathLenConstraint = 3} = public_key:der_decode(
-        'BasicConstraints', BasicConstraints
+    ?assertEqual(
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = #'BasicConstraints'{cA = true, pathLenConstraint = 3}
+        },
+        erl509_certificate_extension:create_basic_constraints_extension(true, 3)
     ),
     ok.
 
 basic_constraints_extension_is_not_ca(_) ->
-    #'Extension'{
-        extnID = ?'id-ce-basicConstraints',
-        critical = true,
-        extnValue = BasicConstraints
-    } =
-        erl509_certificate_extension:create_basic_constraints_extension(false),
-    #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE} = public_key:der_decode(
-        'BasicConstraints', BasicConstraints
+    ?assertEqual(
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE}
+        },
+        erl509_certificate_extension:create_basic_constraints_extension(false)
     ),
     ok.
 
@@ -135,7 +133,7 @@ subject_key_identifier(PublicKey) ->
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
     % SubjectKeyIdentifier is just the hash, not a record.
     Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
-    ?assertEqual(Hash, public_key:der_decode('SubjectKeyIdentifier', Value)),
+    ?assertEqual(Hash, Value),
     ok.
 
 authority_key_identifier(PublicKey) ->
@@ -147,7 +145,7 @@ authority_key_identifier(PublicKey) ->
         keyIdentifier = AuthorityKeyIdentifier,
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
-    } = public_key:der_decode('AuthorityKeyIdentifier', Value),
+    } = Value,
     Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
     ?assertEqual(Hash, AuthorityKeyIdentifier),
     ok.
