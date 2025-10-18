@@ -229,7 +229,6 @@ create_extensions_test_() ->
     [
         % subject_key_identifier and authority_key_identifier are boolean, and control whether the actual identifiers
         % are added as extensions.
-        ?_assertEqual([], create_extensions(#{}, PublicKey, PublicKey)),
         ?_assertMatch(
             [
                 #'Extension'{extnID = ?'id-ce-subjectKeyIdentifier'},
@@ -242,6 +241,8 @@ create_extensions_test_() ->
                     PublicKey
                 )
             )
-        )
+        ),
+        % here we omit them.
+        ?_assertEqual([], create_extensions(#{}, PublicKey, PublicKey))
     ].
 -endif.
