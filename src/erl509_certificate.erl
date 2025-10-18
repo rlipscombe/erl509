@@ -157,7 +157,7 @@ create_subject_public_key_info({#'ECPoint'{} = ECPoint, Parameters}) ->
 
 -spec create_extensions(
     Extensions0 :: map(), SubjectPub :: erl509_public_key:t(), IssuerPub :: erl509_public_key:t()
-) -> [].
+) -> [#'Extension'{}].
 
 create_extensions(Extensions0, SubjectPub, IssuerPub) ->
     maps:fold(
