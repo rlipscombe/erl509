@@ -8,9 +8,11 @@
     get_extension/2
 ]).
 -export([
-    from_pem/1,
     to_pem/1,
-    to_der/1
+    from_pem/1,
+
+    to_der/1,
+    from_der/1
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
@@ -221,6 +223,9 @@ to_pem(#'Certificate'{} = Certificate) ->
 
 to_der(#'Certificate'{} = Certificate) ->
     public_key:der_encode('Certificate', Certificate).
+
+from_der(Der) when is_binary(Der) ->
+    public_key:pkix_decode_cert(Der, plain).
 
 -ifdef(TEST).
 create_extensions_test_() ->
