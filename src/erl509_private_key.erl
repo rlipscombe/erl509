@@ -67,10 +67,14 @@ to_der(#'RSAPrivateKey'{} = RSAPrivateKey) ->
     public_key:der_encode('RSAPrivateKey', RSAPrivateKey).
 
 from_pem(Pem) when is_binary(Pem) ->
-    [Entry = {_, _, not_encrypted}] = public_key:pem_decode(Pem),
-    case public_key:pem_entry_decode(Entry) of
-        #'OneAsymmetricKey'{privateKey = Der} ->
-            public_key:der_decode('ECPrivateKey', Der);
-        Key ->
-            Key
-    end.
+    Entries = public_key:pem_decode(Pem),
+    {value, Entry} = lists:search(
+        fun
+            ({'RSAPrivateKey', _, not_encrypted}) -> true;
+            ({'PrivateKeyInfo', _, not_encrypted}) -> true;
+            ({'ECPrivateKey', _, not_encrypted}) -> true;
+            (_) -> false
+        end,
+        Entries
+    ),
+    public_key:pem_entry_decode(Entry).
