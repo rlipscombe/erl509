@@ -52,9 +52,9 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
             algorithm = ?'id-ecPublicKey',
-            parameters = public_key:der_encode('EcpkParameters', Parameters)
+            parameters = Parameters
         },
-        subjectPublicKey = public_key:der_encode('ECPoint', Point)
+        subjectPublicKey = Point
     }.
 
 unwrap(
