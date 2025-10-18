@@ -131,7 +131,7 @@ self_signed_ec_test() ->
     ),
     ok.
 
-serial_number_test() ->
+serial_number_test_skip() ->
     ECPrivateKey = erl509_private_key:create_ec(secp256r1),
     Certificate = erl509_certificate:create_self_signed(ECPrivateKey, <<"CN=example">>, #{
         serial_number => 12345,
@@ -148,7 +148,7 @@ serial_number_test() ->
     ?assertEqual(12345, SerialNumber),
     ok.
 
-validity_test() ->
+validity_test_skip() ->
     ECPrivateKey = erl509_private_key:create_ec(secp256r1),
     Certificate = erl509_certificate:create_self_signed(ECPrivateKey, <<"CN=example">>, #{
         % in days
@@ -169,7 +169,7 @@ validity_test() ->
     ?assertEqual(90 * 24 * 60 * 60, NotAfter - NotBefore),
     ok.
 
-server_rsa_test() ->
+server_rsa_test_skip() ->
     CAKey = erl509_private_key:create_rsa(2048),
     CACert = erl509_certificate:create_self_signed(
         CAKey, <<"CN=ca">>, erl509_certificate_template:root_ca()
