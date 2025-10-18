@@ -17,17 +17,14 @@ ca_test() ->
         })
     ),
 
-    % Convert the certificate to 'OTP' format.
-    OTPCert = to_otp(CACert),
-
     % The certificate should be self-signed.
-    ?assert(pubkey_cert:is_self_signed(OTPCert)),
+    ?assert(pubkey_cert:is_self_signed(CACert)),
 
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm1
-    } = OTPCert,
+    } = CACert,
 
     % Data:
     #'OTPTBSCertificate'{
@@ -127,10 +124,6 @@ ca_test() ->
     % Verify the signature.
     ?assert(public_key:pkix_verify(erl509_certificate:to_der(CACert), SubjectPublicKey)),
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.

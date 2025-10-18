@@ -42,17 +42,14 @@ client_test() ->
         ClientTemplate
     ),
 
-    % Convert the certificate to 'OTP' format.
-    OTPCert = to_otp(ClientCert),
-
     % The certificate should NOT be self-signed.
-    ?assertNot(pubkey_cert:is_self_signed(OTPCert)),
+    ?assertNot(pubkey_cert:is_self_signed(ClientCert)),
 
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm1
-    } = OTPCert,
+    } = ClientCert,
 
     % Data:
     #'OTPTBSCertificate'{
@@ -172,10 +169,6 @@ client_test() ->
     CAPublicKey = erl509_certificate:get_public_key(CACert),
     ?assert(public_key:pkix_verify(erl509_certificate:to_der(ClientCert), CAPublicKey)),
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.
