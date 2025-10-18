@@ -88,7 +88,7 @@ create_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
     %
     % So we'll do that.
     crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
-create_key_identifier({#'ECPoint'{point = Point} = _EC, _Parameters}) ->
+create_key_identifier({#'ECPoint'{} = Point, _Parameters}) ->
     crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
 
 -ifdef(TEST).
