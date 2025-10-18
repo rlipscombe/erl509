@@ -1,7 +1,6 @@
 -module(erl509_openssl_rsa_key_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
--include_lib("public_key/include/OTP-PUB-KEY.hrl").
 
 rsa_from_pem_test() ->
     % We generated an RSA key with openssl; can we read it in?
