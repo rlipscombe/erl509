@@ -124,7 +124,7 @@ create_certificate(
     }.
 
 apply_default_options(Options) ->
-    DefaultOptions = #{serial_number => random, validity => 365},
+    DefaultOptions = #{serial_number => random, validity => 365, extensions => #{}},
     maps:merge(DefaultOptions, Options).
 
 create_serial_number(#{serial_number := random} = _Options) ->
