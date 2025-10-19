@@ -40,43 +40,35 @@ serverfault_test_() ->
 
     [
         % Assert the correct signature algorithms.
-        ?_assertEqual(?'ecdsa-with-SHA384', get_signature_algorithm(ServerCert)),
-        ?_assertEqual(?sha256WithRSAEncryption, get_signature_algorithm(IntermediateCertificate)),
-        ?_assertEqual(?sha256WithRSAEncryption, get_signature_algorithm(RootCertificate)),
+        ?_assertEqual(
+            ?'ecdsa-with-SHA384', erl509_certificate_util:get_signature_algorithm(ServerCert)
+        ),
+        ?_assertEqual(
+            ?sha256WithRSAEncryption,
+            erl509_certificate_util:get_signature_algorithm(IntermediateCertificate)
+        ),
+        ?_assertEqual(
+            ?sha256WithRSAEncryption,
+            erl509_certificate_util:get_signature_algorithm(RootCertificate)
+        ),
 
         % Assert the correct key types.
         ?_assertEqual(
             #'PublicKeyAlgorithm'{
                 algorithm = ?'id-ecPublicKey', parameters = {namedCurve, ?'secp256r1'}
             },
-            get_subject_public_key_algorithm(ServerCert)
+            erl509_certificate_util:get_subject_public_key_algorithm(ServerCert)
         ),
         ?_assertEqual(
             #'PublicKeyAlgorithm'{
                 algorithm = ?'id-ecPublicKey', parameters = {namedCurve, ?'secp384r1'}
             },
-            get_subject_public_key_algorithm(IntermediateCertificate)
+            erl509_certificate_util:get_subject_public_key_algorithm(IntermediateCertificate)
         ),
         ?_assertEqual(
             #'PublicKeyAlgorithm'{
                 algorithm = ?rsaEncryption, parameters = 'NULL'
             },
-            get_subject_public_key_algorithm(RootCertificate)
+            erl509_certificate_util:get_subject_public_key_algorithm(RootCertificate)
         )
     ].
-
-get_signature_algorithm(
-    #'OTPCertificate'{
-        tbsCertificate = #'OTPTBSCertificate'{
-            signature = #'SignatureAlgorithm'{algorithm = SignatureAlgorithm}
-        }
-    }
-) ->
-    SignatureAlgorithm.
-
-get_subject_public_key_algorithm(#'OTPCertificate'{
-    tbsCertificate = #'OTPTBSCertificate'{
-        subjectPublicKeyInfo = #'OTPSubjectPublicKeyInfo'{algorithm = SubjectPublicKeyAlgorithm}
-    }
-}) ->
-    SubjectPublicKeyAlgorithm.
