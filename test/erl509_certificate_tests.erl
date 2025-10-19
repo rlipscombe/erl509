@@ -155,13 +155,8 @@ validity_test() ->
         extensions => #{}
     }),
 
-    #'OTPCertificate'{
-        tbsCertificate = #'OTPTBSCertificate'{
-            validity = Validity
-        }
-    } = Certificate,
+    {NotBefore, NotAfter} = parse_validity(erl509_certificate:get_validity(Certificate)),
 
-    {NotBefore, NotAfter} = parse_validity(Validity),
     ?assert(NotBefore =< erlang:system_time(second)),
     ?assertEqual(90 * 24 * 60 * 60, NotAfter - NotBefore),
     ok.

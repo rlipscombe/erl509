@@ -5,6 +5,7 @@
 ]).
 -export([
     get_public_key/1,
+    get_validity/1,
     get_extension/2
 ]).
 -export([
@@ -211,6 +212,12 @@ get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) -
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
     erl509_public_key:unwrap(SubjectPublicKeyInfo).
 
+get_validity(#'OTPCertificate'{
+    tbsCertificate = #'OTPTBSCertificate'{
+        validity = Validity
+    }
+}) ->
+    Validity.
 
 get_extension(
     #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
