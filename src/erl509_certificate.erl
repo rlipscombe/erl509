@@ -44,7 +44,7 @@ create_self_signed(PrivateKey, Subject, Options) when
     IssuerRdn = erl509_rdn_seq:create(Issuer),
 
     Validity = create_validity(Options2),
-    #{extensions := Extensions0} = Options2,
+    Extensions = create_extensions(Options2, SubjectPub, SubjectPub),
     create_certificate(
         SubjectPub,
         SubjectRdn,
@@ -53,7 +53,7 @@ create_self_signed(PrivateKey, Subject, Options) when
         SerialNumber,
         Validity,
         SignatureAlgorithm,
-        Extensions0
+        Extensions
     ).
 
 create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
@@ -68,7 +68,7 @@ create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
     IssuerRdn = get_issuer_rdn(IssuerCertificate),
 
     Validity = create_validity(Options2),
-    #{extensions := Extensions0} = Options2,
+    Extensions = create_extensions(Options2, SubjectPub, IssuerCertificate),
     create_certificate(
         SubjectPub,
         SubjectRdn,
@@ -77,7 +77,7 @@ create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
         SerialNumber,
         Validity,
         SignatureAlgorithm,
-        Extensions0
+        Extensions
     ).
 
 create_certificate(
@@ -88,12 +88,9 @@ create_certificate(
     SerialNumber,
     Validity,
     SignatureAlgorithm,
-    Extensions0
+    Extensions
 ) ->
     SubjectPublicKeyInfo = create_subject_public_key_info(SubjectPub),
-    IssuerPub = erl509_private_key:derive_public_key(IssuerKey),
-
-    Extensions = create_extensions(Extensions0, SubjectPub, IssuerPub),
 
     % Create the certificate entity. It's an OTPTBSCertificate.
     Certificate = #'OTPTBSCertificate'{
@@ -166,10 +163,12 @@ create_subject_public_key_info({#'ECPoint'{} = ECPoint, Parameters}) ->
     }.
 
 -spec create_extensions(
-    Extensions0 :: map(), SubjectPub :: erl509_public_key:t(), IssuerPub :: erl509_public_key:t()
+    Extensions0 :: map(),
+    SubjectPub :: erl509_public_key:t(),
+    Issuer :: erl509_public_key:t() | erl509_certificate:t()
 ) -> [#'Extension'{}].
 
-create_extensions(Extensions0, SubjectPub, IssuerPub) ->
+create_extensions(#{extensions := Extensions} = _Options, SubjectPub, Issuer) ->
     maps:fold(
         fun
             (_Key, #'Extension'{} = Extension, Acc) ->
@@ -182,16 +181,21 @@ create_extensions(Extensions0, SubjectPub, IssuerPub) ->
             (subject_key_identifier, false, Acc) ->
                 Acc;
             (authority_key_identifier, true, Acc) ->
-                Extension = erl509_certificate_extension:create_authority_key_identifier_extension(
-                    IssuerPub
-                ),
+                Extension = create_authority_key_identifier_extension(Issuer),
                 [Extension | Acc];
             (authority_key_identifier, false, Acc) ->
                 Acc
         end,
         [],
-        Extensions0
+        Extensions
     ).
+
+% Note that voltone/x509 also allows an arbitrary binary for the AKI.
+create_authority_key_identifier_extension(#'OTPCertificate'{} = Issuer) ->
+    #'Extension'{extnValue = SKI} = get_extension(Issuer, ?'id-ce-subjectKeyIdentifier'),
+    create_authority_key_identifier_extension(SKI);
+create_authority_key_identifier_extension(Issuer) ->
+    erl509_certificate_extension:create_authority_key_identifier_extension(Issuer).
 
 get_public_key(#'OTPCertificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
     get_public_key(TbsCertificate);
@@ -247,13 +251,17 @@ create_extensions_test_() ->
             ],
             lists:sort(
                 create_extensions(
-                    #{subject_key_identifier => true, authority_key_identifier => true},
+                    #{
+                        extensions => #{
+                            subject_key_identifier => true, authority_key_identifier => true
+                        }
+                    },
                     PublicKey,
                     PublicKey
                 )
             )
         ),
         % here we omit them.
-        ?_assertEqual([], create_extensions(#{}, PublicKey, PublicKey))
+        ?_assertEqual([], create_extensions(#{extensions => #{}}, PublicKey, PublicKey))
     ].
 -endif.

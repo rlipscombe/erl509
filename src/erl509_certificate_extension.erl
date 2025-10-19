@@ -80,7 +80,10 @@ to_subject_alt_name({_, _} = Name) ->
 create_subject_key_identifier(Key) ->
     create_key_identifier(Key).
 
--spec create_authority_key_identifier(erl509_public_key:t()) -> #'AuthorityKeyIdentifier'{}.
+-spec create_authority_key_identifier(erl509_public_key:t() | binary()) ->
+    #'AuthorityKeyIdentifier'{}.
+create_authority_key_identifier(AKI) when is_binary(AKI) ->
+    #'AuthorityKeyIdentifier'{keyIdentifier = AKI};
 create_authority_key_identifier(Key) ->
     #'AuthorityKeyIdentifier'{keyIdentifier = create_key_identifier(Key)}.
 
