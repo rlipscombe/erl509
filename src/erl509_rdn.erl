@@ -12,5 +12,9 @@ create_rdn_attr({<<"CN">>, Value}) when byte_size(Value) =< 256 ->
     [#'AttributeTypeAndValue'{type = ?'id-at-commonName', value = {utf8String, Value}}];
 create_rdn_attr({<<"O">>, Value}) when byte_size(Value) =< 256 ->
     [#'AttributeTypeAndValue'{type = ?'id-at-organizationName', value = {utf8String, Value}}];
+create_rdn_attr({<<"L">>, Value}) when byte_size(Value) =< 256 ->
+    [#'AttributeTypeAndValue'{type = ?'id-at-localityName', value = {utf8String, Value}}];
+create_rdn_attr({<<"ST">>, Value}) when byte_size(Value) =< 256 ->
+    [#'AttributeTypeAndValue'{type = ?'id-at-stateOrProvinceName', value = {utf8String, Value}}];
 create_rdn_attr({<<"C">>, Value}) ->
     [#'AttributeTypeAndValue'{type = ?'id-at-countryName', value = binary_to_list(Value)}].
