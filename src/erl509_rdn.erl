@@ -7,6 +7,8 @@ create_rdn(<<"CN=", Value/binary>>) ->
     create_rdn(?'id-at-commonName', Value);
 create_rdn(<<"O=", Value/binary>>) ->
     create_rdn(?'id-at-organizationName', Value);
+create_rdn(<<"C=", Value/binary>>) ->
+    create_rdn(?'id-at-countryName', Value);
 create_rdn(Value) when is_list(Value) ->
     create_rdn(list_to_binary(Value)).
 

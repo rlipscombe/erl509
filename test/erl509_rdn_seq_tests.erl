@@ -26,3 +26,22 @@ docker_desktop_test() ->
         ]},
         erl509_rdn_seq:create(<<"O=system:masters, CN=docker-for-desktop">>)
     ).
+
+isrg_test() ->
+    ?assertEqual(
+        {rdnSequence, [
+            [
+                {'AttributeTypeAndValue', ?'id-at-countryName',
+                    {printableString, <<"US">>}}
+            ],
+            [
+                {'AttributeTypeAndValue', ?'id-at-organizationName',
+                    {printableString, <<"Not Internet Security Research Group">>}}
+            ],
+            [
+                {'AttributeTypeAndValue', ?'id-at-commonName',
+                    {printableString, <<"Not ISRG Root X1">>}}
+            ]
+        ]},
+        erl509_rdn_seq:create(<<"/C=US/O=Not Internet Security Research Group/CN=Not ISRG Root X1">>)
+    ).
