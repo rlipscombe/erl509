@@ -71,6 +71,8 @@ client() ->
 client(Options) ->
     merge(client(), Options).
 
+% Note that we don't allow deleting an extension from the provided template. If you want to do that, don't use a
+% template; specify your options explicitly.
 merge(DefaultOptions, ExtraOptions) ->
     maps:merge_with(
         fun
