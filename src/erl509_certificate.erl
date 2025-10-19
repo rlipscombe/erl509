@@ -144,6 +144,11 @@ get_signature_algorithm(#'ECPrivateKey'{}, #{hash_algorithm := sha256}) ->
     #'SignatureAlgorithm'{
         algorithm = ?'ecdsa-with-SHA256',
         parameters = asn1_NOVALUE
+    };
+get_signature_algorithm(#'ECPrivateKey'{}, #{hash_algorithm := sha384}) ->
+    #'SignatureAlgorithm'{
+        algorithm = ?'ecdsa-with-SHA384',
+        parameters = asn1_NOVALUE
     }.
 
 create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
