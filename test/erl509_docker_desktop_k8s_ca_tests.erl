@@ -11,6 +11,10 @@ ca_test() ->
         <<"CN=kubernetes">>,
         erl509_certificate_template:root_ca(#{
             extensions => #{
+                % Docker Desktop CA uses non-default Key Usage values.
+                key_usage => erl509_certificate_extension:create_key_usage_extension([
+                    digitalSignature, keyEncipherment, keyCertSign
+                ]),
                 subject_alt_name => erl509_certificate_extension:create_subject_alt_name_extension([
                     <<"kubernetes">>
                 ])

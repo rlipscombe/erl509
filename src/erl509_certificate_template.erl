@@ -18,7 +18,7 @@ root_ca() ->
         extensions =>
             #{
                 key_usage => erl509_certificate_extension:create_key_usage_extension([
-                    digitalSignature, keyEncipherment, keyCertSign
+                    keyCertSign, cRLSign
                 ]),
                 basic_constraints => erl509_certificate_extension:create_basic_constraints_extension(
                     true, 1
