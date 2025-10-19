@@ -6,7 +6,9 @@
     unwrap/1,
 
     to_pem/1,
-    to_pem/2
+    to_pem/2,
+
+    to_der/1
 ]).
 
 -export_type([
@@ -40,6 +42,20 @@ to_pem({#'ECPoint'{point = _}, _} = ECPublicKey, _Wrapped, _Opts) ->
         public_key:pem_entry_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo)
     ]).
 
+to_der(PublicKey) ->
+    to_der(PublicKey, [wrap]).
+
+to_der(PublicKey, Opts) ->
+    case proplists:get_bool(wrap, Opts) of
+        true ->
+            der_encode(wrap(PublicKey));
+        false ->
+            der_encode(PublicKey)
+    end.
+
+der_encode(#'SubjectPublicKeyInfo'{} = SubjectPublicKeyInfo) ->
+    public_key:der_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo).
+
 wrap(#'RSAPublicKey'{} = RSAPublicKey) ->
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
@@ -52,11 +68,30 @@ wrap({#'ECPoint'{point = Point}, Parameters}) ->
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
             algorithm = ?'id-ecPublicKey',
-            parameters = public_key:der_encode('EcpkParameters', Parameters)
+            parameters = maybe_encode_parameters(Parameters)
         },
-        subjectPublicKey = public_key:der_encode('ECPoint', Point)
+        subjectPublicKey = Point
     }.
 
+maybe_encode_parameters(Parameters) ->
+    maybe_encode_parameters(Parameters, application:get_key(public_key, vsn)).
+
+maybe_encode_parameters('NULL' = _Parameters, {ok, V}) when V >= "1.18" ->
+    'NULL';
+maybe_encode_parameters(Parameters, {ok, V}) when V >= "1.18" ->
+    Parameters;
+maybe_encode_parameters('NULL' = _Parameters, {ok, _V}) ->
+    ?DER_NULL;
+maybe_encode_parameters(Parameters, {ok, _}) ->
+    public_key:der_encode('EcpkParameters', Parameters).
+
+unwrap(
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = _},
+        subjectPublicKey = SubjectPublicKey
+    } = _SubjectPublicKeyInfo
+) ->
+    SubjectPublicKey;
 unwrap(
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = _},

@@ -22,7 +22,7 @@ create_key_usage_extension(KeyUsage) ->
     #'Extension'{
         extnID = ?'id-ce-keyUsage',
         critical = true,
-        extnValue = public_key:der_encode('KeyUsage', KeyUsage)
+        extnValue = KeyUsage
     }.
 
 create_basic_constraints_extension(IsCA) ->
@@ -32,22 +32,17 @@ create_basic_constraints_extension(IsCA, PathLenConstraint) ->
     #'Extension'{
         extnID = ?'id-ce-basicConstraints',
         critical = true,
-        extnValue = public_key:der_encode(
-            'BasicConstraints', #'BasicConstraints'{
-                cA = IsCA, pathLenConstraint = PathLenConstraint
-            }
-        )
+        extnValue = #'BasicConstraints'{cA = IsCA, pathLenConstraint = PathLenConstraint}
     }.
 
 create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyUsages) ->
     #'Extension'{
         extnID = ?'id-ce-extKeyUsage',
         critical = false,
-        extnValue = public_key:der_encode(
-            'ExtKeyUsageSyntax', ExtendedKeyUsages
-        )
+        extnValue = ExtendedKeyUsages
     }.
 
+-spec create_subject_key_identifier_extension(SubjectPub :: erl509_public_key:t()) -> #'Extension'{}.
 create_subject_key_identifier_extension(SubjectPub) ->
     % The subjectKeyIdentifier (and authorityKeyIdentifier) extensions are used (instead of the name) to build the
     % certificate path.
@@ -55,28 +50,23 @@ create_subject_key_identifier_extension(SubjectPub) ->
     #'Extension'{
         extnID = ?'id-ce-subjectKeyIdentifier',
         critical = false,
-        extnValue = public_key:der_encode(
-            'SubjectKeyIdentifier', SubjectKeyIdentifier
-        )
+        extnValue = SubjectKeyIdentifier
     }.
 
+-spec create_authority_key_identifier_extension(IssuerPub :: erl509_public_key:t()) -> #'Extension'{}.
 create_authority_key_identifier_extension(IssuerPub) ->
     AuthorityKeyIdentifier = create_authority_key_identifier(IssuerPub),
     #'Extension'{
         extnID = ?'id-ce-authorityKeyIdentifier',
         critical = false,
-        extnValue = public_key:der_encode(
-            'AuthorityKeyIdentifier', AuthorityKeyIdentifier
-        )
+        extnValue = AuthorityKeyIdentifier
     }.
 
 create_subject_alt_name_extension(Names) ->
     #'Extension'{
         extnID = ?'id-ce-subjectAltName',
         critical = false,
-        extnValue = public_key:der_encode(
-            'SubjectAltName', lists:map(fun to_subject_alt_name/1, Names)
-        )
+        extnValue = lists:map(fun to_subject_alt_name/1, Names)
     }.
 
 to_subject_alt_name(Name) when is_binary(Name) ->
@@ -93,15 +83,13 @@ create_authority_key_identifier(Key) ->
     #'AuthorityKeyIdentifier'{keyIdentifier = create_key_identifier(Key)}.
 
 -spec create_key_identifier(erl509_public_key:t()) -> binary().
-create_key_identifier(#'RSAPublicKey'{} = RSAPublicKey) ->
+create_key_identifier(Key) ->
     % RFC 5280 says "subject key identifiers SHOULD be derived from the public key or a method that generates unique values".
     %
     % It says a common method of doing that is "the 160-bit SHA-1 hash of the value of the BIT STRING subjectPublicKey".
     %
     % So we'll do that.
-    crypto:hash(sha, public_key:der_encode('RSAPublicKey', RSAPublicKey));
-create_key_identifier({#'ECPoint'{point = Point} = _EC, _Parameters}) ->
-    crypto:hash(sha, public_key:der_encode('ECPoint', Point)).
+    crypto:hash(sha, erl509_public_key:to_der(Key)).
 
 -ifdef(TEST).
 all_test_() ->
@@ -118,26 +106,24 @@ all_test_() ->
         ]}}.
 
 basic_constraints_extension_is_ca(_) ->
-    #'Extension'{
-        extnID = ?'id-ce-basicConstraints',
-        critical = true,
-        extnValue = BasicConstraints
-    } =
-        erl509_certificate_extension:create_basic_constraints_extension(true, 3),
-    #'BasicConstraints'{cA = true, pathLenConstraint = 3} = public_key:der_decode(
-        'BasicConstraints', BasicConstraints
+    ?assertEqual(
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = #'BasicConstraints'{cA = true, pathLenConstraint = 3}
+        },
+        erl509_certificate_extension:create_basic_constraints_extension(true, 3)
     ),
     ok.
 
 basic_constraints_extension_is_not_ca(_) ->
-    #'Extension'{
-        extnID = ?'id-ce-basicConstraints',
-        critical = true,
-        extnValue = BasicConstraints
-    } =
-        erl509_certificate_extension:create_basic_constraints_extension(false),
-    #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE} = public_key:der_decode(
-        'BasicConstraints', BasicConstraints
+    ?assertEqual(
+        #'Extension'{
+            extnID = ?'id-ce-basicConstraints',
+            critical = true,
+            extnValue = #'BasicConstraints'{cA = false, pathLenConstraint = asn1_NOVALUE}
+        },
+        erl509_certificate_extension:create_basic_constraints_extension(false)
     ),
     ok.
 
@@ -146,8 +132,8 @@ subject_key_identifier(PublicKey) ->
         extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
     % SubjectKeyIdentifier is just the hash, not a record.
-    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
-    ?assertEqual(Hash, public_key:der_decode('SubjectKeyIdentifier', Value)),
+    Hash = crypto:hash(sha, erl509_public_key:to_der(PublicKey)),
+    ?assertEqual(Hash, Value),
     ok.
 
 authority_key_identifier(PublicKey) ->
@@ -159,8 +145,8 @@ authority_key_identifier(PublicKey) ->
         keyIdentifier = AuthorityKeyIdentifier,
         authorityCertIssuer = asn1_NOVALUE,
         authorityCertSerialNumber = asn1_NOVALUE
-    } = public_key:der_decode('AuthorityKeyIdentifier', Value),
-    Hash = crypto:hash(sha, public_key:der_encode('RSAPublicKey', PublicKey)),
+    } = Value,
+    Hash = crypto:hash(sha, erl509_public_key:to_der(PublicKey)),
     ?assertEqual(Hash, AuthorityKeyIdentifier),
     ok.
 -endif.

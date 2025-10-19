@@ -1,6 +1,8 @@
 -module(erl509_certificate_tests).
 -include_lib("eunit/include/eunit.hrl").
+
 -include_lib("public_key/include/public_key.hrl").
+-include("erl509_compat.hrl").
 
 self_signed_rsa_test() ->
     RSAPrivateKey = erl509_private_key:create_rsa(2048),
@@ -12,9 +14,7 @@ self_signed_rsa_test() ->
     ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
     _DER = erl509_certificate:to_der(Certificate),
 
-    OTPCertificate = to_otp(Certificate),
-
-    ?assert(pubkey_cert:is_self_signed(OTPCertificate)),
+    ?assert(pubkey_cert:is_self_signed(Certificate)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
@@ -31,7 +31,7 @@ self_signed_rsa_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = Signature
-    } = OTPCertificate,
+    } = Certificate,
 
     ?assertEqual(2048, 8 * byte_size(Signature)),
 
@@ -48,7 +48,7 @@ self_signed_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS},
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{
@@ -71,9 +71,7 @@ self_signed_ec_test() ->
     PEM = erl509_certificate:to_pem(Certificate),
     ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
 
-    OTPCertificate = to_otp(Certificate),
-
-    ?assert(pubkey_cert:is_self_signed(OTPCertificate)),
+    ?assert(pubkey_cert:is_self_signed(Certificate)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
@@ -90,7 +88,7 @@ self_signed_ec_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = _
-    } = OTPCertificate,
+    } = Certificate,
     ?assertEqual(
         {rdnSequence, [
             [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]
@@ -138,13 +136,11 @@ serial_number_test() ->
         extensions => #{}
     }),
 
-    OTPCertificate = to_otp(Certificate),
-
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             serialNumber = SerialNumber
         }
-    } = OTPCertificate,
+    } = Certificate,
     ?assertEqual(12345, SerialNumber),
     ok.
 
@@ -156,13 +152,11 @@ validity_test() ->
         extensions => #{}
     }),
 
-    OTPCertificate = to_otp(Certificate),
-
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             validity = Validity
         }
-    } = OTPCertificate,
+    } = Certificate,
 
     {NotBefore, NotAfter} = parse_validity(Validity),
     ?assert(NotBefore =< erlang:system_time(second)),
@@ -181,8 +175,6 @@ server_rsa_test() ->
         ServerPub, <<"CN=server">>, CACert, CAKey, erl509_certificate_template:server()
     ),
 
-    OTPCertificate = to_otp(ServerCert),
-
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
             version = _,
@@ -198,7 +190,7 @@ server_rsa_test() ->
         },
         signatureAlgorithm = SignatureAlgorithm,
         signature = _
-    } = OTPCertificate,
+    } = ServerCert,
     ?assertEqual(
         {rdnSequence, [
             [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "ca"}}]
@@ -212,7 +204,7 @@ server_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS},
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{
@@ -233,10 +225,6 @@ server_rsa_test() ->
     % lists:search(fun(moo) -> false end, Extensions),
 
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.

@@ -18,6 +18,6 @@ create_rdn(Type, Len, Value) when Len =< 255 ->
     [
         #'AttributeTypeAndValue'{
             type = Type,
-            value = <<19, Len:8, Value/binary>>
+            value = {printableString, Value}
         }
     ].

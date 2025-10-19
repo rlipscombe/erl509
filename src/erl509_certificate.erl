@@ -16,11 +16,11 @@
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
+-define(DER_NULL, <<5, 0>>).
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
-
--define(DER_NULL, <<5, 0>>).
 
 -type t() :: #'Certificate'{}.
 
@@ -65,11 +65,7 @@ create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
     SubjectRdn = erl509_rdn_seq:create(Subject),
 
     % Get Issuer from IssuerCertificate.
-    #'Certificate'{
-        tbsCertificate = #'TBSCertificate'{
-            subject = IssuerRdn
-        }
-    } = IssuerCertificate,
+    IssuerRdn = get_issuer_rdn(IssuerCertificate),
 
     Validity = create_validity(Options2),
     #{extensions := Extensions0} = Options2,
@@ -99,8 +95,8 @@ create_certificate(
 
     Extensions = create_extensions(Extensions0, SubjectPub, IssuerPub),
 
-    % Create the certificate entity. It's a TBSCertificate.
-    TbsCertificate = #'TBSCertificate'{
+    % Create the certificate entity. It's an OTPTBSCertificate.
+    Certificate = #'OTPTBSCertificate'{
         version = v3,
         serialNumber = SerialNumber,
         signature = SignatureAlgorithm,
@@ -113,17 +109,7 @@ create_certificate(
         extensions = Extensions
     },
 
-    % We sign the DER-encoded TBSCertificate entity.
-    TbsCertificateDer = public_key:der_encode('TBSCertificate', TbsCertificate),
-
-    % We're using sha256WithRSAEncryption or ecdsa-with-SHA256, so we sign the certificate with this:
-    Signature = public_key:sign(TbsCertificateDer, sha256, IssuerKey),
-
-    #'Certificate'{
-        tbsCertificate = TbsCertificate,
-        signatureAlgorithm = SignatureAlgorithm,
-        signature = Signature
-    }.
+    from_der(public_key:pkix_sign(Certificate, IssuerKey)).
 
 apply_default_options(Options) ->
     DefaultOptions = #{serial_number => random, validity => 365, extensions => #{}},
@@ -145,33 +131,33 @@ create_validity(#{validity := ExpiryDays} = _Options) ->
     }.
 
 get_signature_algorithm(#'RSAPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+    #'SignatureAlgorithm'{
         algorithm = ?sha256WithRSAEncryption,
-        parameters = ?DER_NULL
+        parameters = {'asn1_OPENTYPE', ?DER_NULL}
     };
 get_signature_algorithm(#'ECPrivateKey'{}) ->
-    #'AlgorithmIdentifier'{
+    #'SignatureAlgorithm'{
         algorithm = ?'ecdsa-with-SHA256',
         parameters = asn1_NOVALUE
     }.
 
 create_subject_public_key_info(#'RSAPublicKey'{} = RSAPublicKey) ->
-    #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{algorithm = ?rsaEncryption, parameters = ?DER_NULL},
-        subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{algorithm = ?rsaEncryption, parameters = 'NULL'},
+        subjectPublicKey = RSAPublicKey
     };
-create_subject_public_key_info({#'ECPoint'{point = Point} = _EC, Parameters}) ->
-    #'SubjectPublicKeyInfo'{
-        algorithm = #'AlgorithmIdentifier'{
+create_subject_public_key_info({#'ECPoint'{} = ECPoint, Parameters}) ->
+    #'OTPSubjectPublicKeyInfo'{
+        algorithm = #'PublicKeyAlgorithm'{
             algorithm = ?'id-ecPublicKey',
-            parameters = public_key:der_encode('EcpkParameters', Parameters)
+            parameters = Parameters
         },
-        subjectPublicKey = Point
+        subjectPublicKey = ECPoint
     }.
 
 -spec create_extensions(
     Extensions0 :: map(), SubjectPub :: erl509_public_key:t(), IssuerPub :: erl509_public_key:t()
-) -> [].
+) -> [#'Extension'{}].
 
 create_extensions(Extensions0, SubjectPub, IssuerPub) ->
     maps:fold(
@@ -197,35 +183,45 @@ create_extensions(Extensions0, SubjectPub, IssuerPub) ->
         Extensions0
     ).
 
+get_public_key(#'OTPCertificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
+    get_public_key(TbsCertificate);
+get_public_key(#'OTPTBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
+    erl509_public_key:unwrap(SubjectPublicKeyInfo);
 get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
     get_public_key(TbsCertificate);
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
     erl509_public_key:unwrap(SubjectPublicKeyInfo).
 
-get_extension(#'Certificate'{} = Certificate, ExtnID) ->
-    % TODO: voltone/x509 uses OTPCertificate as the internal representation; we should do the same.
-    OTPCert = public_key:pkix_decode_cert(public_key:der_encode('Certificate', Certificate), otp),
-    get_extension(OTPCert, ExtnID);
+get_issuer_rdn(#'OTPCertificate'{tbsCertificate = TbsCertificate}) ->
+    get_issuer_rdn(TbsCertificate);
+get_issuer_rdn(#'OTPTBSCertificate'{subject = IssuerRdn}) ->
+    IssuerRdn.
+
 get_extension(
     #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
 ) ->
     case lists:search(fun(#'Extension'{extnID = ID}) -> ID == ExtnID end, Extensions) of
         {value, Extension} -> Extension;
         false -> undefined
-    end.
+    end;
+get_extension(#'Certificate'{} = Certificate, ExtnID) ->
+    OTPCert = public_key:pkix_decode_cert(to_der(Certificate), otp),
+    get_extension(OTPCert, ExtnID).
 
 from_pem(Pem) when is_binary(Pem) ->
     [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
     from_der(Der).
 
-to_pem(#'Certificate'{} = Certificate) ->
-    public_key:pem_encode([public_key:pem_entry_encode('Certificate', Certificate)]).
+to_pem(Certificate) ->
+    public_key:pem_encode([{'Certificate', to_der(Certificate), not_encrypted}]).
 
+to_der(#'OTPCertificate'{} = Certificate) ->
+    public_key:pkix_encode('OTPCertificate', Certificate, otp);
 to_der(#'Certificate'{} = Certificate) ->
-    public_key:der_encode('Certificate', Certificate).
+    public_key:pkix_encode('Certificate', Certificate, plain).
 
 from_der(Der) when is_binary(Der) ->
-    public_key:pkix_decode_cert(Der, plain).
+    public_key:pkix_decode_cert(Der, otp).
 
 -ifdef(TEST).
 create_extensions_test_() ->
