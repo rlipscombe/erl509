@@ -9,7 +9,9 @@ _testing_.
 
 ```erlang
 RSAPrivateKey = erl509_private_key:create_rsa(2048).
-Certificate = erl509_certificate:create_self_signed(RSAPrivateKey, <<"CN=example-ca">>, erl509_certificate_template:root_ca()).
+Certificate = erl509_certificate:create_self_signed(
+    RSAPrivateKey, <<"CN=example-ca">>, erl509_certificate_template:root_ca()).
+
 PEM = erl509_certificate:to_pem(Certificate).
 ok = file:write_file("example-ca.crt", PEM).
 ```
@@ -50,11 +52,13 @@ Certificate:
 
 ```erlang
 CAKey = erl509_private_key:create_rsa(2048).
-CACert = erl509_certificate:create_self_signed(CAKey, <<"CN=example-ca">>, erl509_certificate_template:root_ca()).
+CACert = erl509_certificate:create_self_signed(
+    CAKey, <<"CN=example-ca">>, erl509_certificate_template:root_ca()).
 
 ServerKey = erl509_private_key:create_rsa(2048).
 ServerPub = erl509_public_key:derive_public_key(ServerKey).
-ServerCert = erl509_certificate:create(ServerPub, <<"CN=server">>, CACert, CAKey, erl509_certificate_template:server()).
+ServerCert = erl509_certificate:create(
+    ServerPub, <<"CN=server">>, CACert, CAKey, erl509_certificate_template:server()).
 ServerPEM = erl509_certificate:to_pem(ServerCert).
 ok = file:write_file("server.crt", ServerPEM).
 ```
