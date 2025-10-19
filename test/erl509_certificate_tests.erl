@@ -223,13 +223,8 @@ server_rsa_test() ->
     ?assertEqual(365 * 24 * 60 * 60, NotAfter - NotBefore),
 
     ?assertEqual(5, length(Extensions)),
-    % lists:search(fun(moo) -> false end, Extensions),
-
+    % TODO: Assert all of the extensions.
     ok.
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.
-
-% TODO: issuing intermediate CA certificate.
-% TODO: issuing client certificates.
-% All of the above should flush out some extension details (particularly SKID and AKID).
