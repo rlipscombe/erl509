@@ -2,6 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 -include_lib("public_key/include/public_key.hrl").
+-include("erl509_compat.hrl").
 
 client_test() ->
     % Create the CA certificate.
@@ -42,17 +43,14 @@ client_test() ->
         ClientTemplate
     ),
 
-    % Convert the certificate to 'OTP' format.
-    OTPCert = to_otp(ClientCert),
-
     % The certificate should NOT be self-signed.
-    ?assertNot(pubkey_cert:is_self_signed(OTPCert)),
+    ?assertNot(pubkey_cert:is_self_signed(ClientCert)),
 
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
         signatureAlgorithm = SignatureAlgorithm1
-    } = OTPCert,
+    } = ClientCert,
 
     % Data:
     #'OTPTBSCertificate'{
@@ -78,7 +76,10 @@ client_test() ->
 
     % Signature Algorithm: sha256WithRSAEncryption
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{
+            algorithm = ?sha256WithRSAEncryption,
+            parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS
+        },
         SignatureAlgorithm1
     ),
 
@@ -164,7 +165,10 @@ client_test() ->
 
     % Signature Algorithm: sha256WithRSAEncryption
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = 'NULL'},
+        #'SignatureAlgorithm'{
+            algorithm = ?sha256WithRSAEncryption,
+            parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS
+        },
         SignatureAlgorithm2
     ),
 
@@ -172,10 +176,6 @@ client_test() ->
     CAPublicKey = erl509_certificate:get_public_key(CACert),
     ?assert(public_key:pkix_verify(erl509_certificate:to_der(ClientCert), CAPublicKey)),
     ok.
-
-to_otp(#'Certificate'{} = Certificate) ->
-    DER = public_key:der_encode('Certificate', Certificate),
-    public_key:pkix_decode_cert(DER, otp).
 
 parse_validity(#'Validity'{notBefore = NotBefore, notAfter = NotAfter}) ->
     {erl509_time:decode_time(NotBefore), erl509_time:decode_time(NotAfter)}.

@@ -43,9 +43,15 @@ get_ec_private_key_from_pem2([<<"-----BEGIN EC PRIVATE KEY-----">> = Line | Rest
 get_ec_private_key_from_pem2([_ | Rest]) ->
     get_ec_private_key_from_pem2(Rest).
 
+-if(?OTP_RELEASE >= 28).
+-define(EXPECTED_VERSION, ecPrivkeyVer1).
+-else.
+-define(EXPECTED_VERSION, 1).
+-endif.
+
 expected_key() ->
     #'ECPrivateKey'{
-        version = 1,
+        version = ?EXPECTED_VERSION,
         privateKey =
             <<252, 154, 145, 134, 232, 2, 96, 49, 47, 227, 72, 197, 11, 45, 90, 235, 146, 91, 111,
                 27, 91, 53, 20, 62, 87, 104, 244, 48, 51, 207, 160, 137>>,
