@@ -96,7 +96,7 @@ client_test() ->
     % Issuer: CN=kubernetes
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "kubernetes"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"kubernetes">>}}]
         ]},
         Issuer
     ),
@@ -116,11 +116,11 @@ client_test() ->
         {rdnSequence, [
             [
                 {'AttributeTypeAndValue', ?'id-at-organizationName',
-                    {printableString, "system:masters"}}
+                    {utf8String, <<"system:masters">>}}
             ],
             [
                 {'AttributeTypeAndValue', ?'id-at-commonName',
-                    {printableString, "docker-for-desktop"}}
+                    {utf8String, <<"docker-for-desktop">>}}
             ]
         ]},
         Subject

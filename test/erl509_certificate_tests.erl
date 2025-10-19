@@ -37,13 +37,13 @@ self_signed_rsa_test() ->
 
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"example">>}}]
         ]},
         Issuer
     ),
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"example">>}}]
         ]},
         Subject
     ),
@@ -91,13 +91,13 @@ self_signed_ec_test() ->
     } = Certificate,
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"example">>}}]
         ]},
         Issuer
     ),
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "example"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"example">>}}]
         ]},
         Subject
     ),
@@ -193,13 +193,13 @@ server_rsa_test() ->
     } = ServerCert,
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "ca"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"ca">>}}]
         ]},
         Issuer
     ),
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "server"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"server">>}}]
         ]},
         Subject
     ),

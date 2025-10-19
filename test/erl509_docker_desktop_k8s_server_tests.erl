@@ -101,7 +101,7 @@ server_test() ->
     % Issuer: CN=kubernetes
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "kubernetes"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"kubernetes">>}}]
         ]},
         Issuer
     ),
@@ -119,7 +119,7 @@ server_test() ->
     % Subject: CN=kube-apiserver
     ?assertEqual(
         {rdnSequence, [
-            [{'AttributeTypeAndValue', ?'id-at-commonName', {printableString, "kube-apiserver"}}]
+            [{'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"kube-apiserver">>}}]
         ]},
         Subject
     ),
