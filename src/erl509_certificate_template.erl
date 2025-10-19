@@ -39,7 +39,7 @@ ca() ->
         extensions =>
             #{
                 basic_constraints => erl509_certificate_extension:create_basic_constraints_extension(
-                    true, 1
+                    true, 0
                 ),
                 key_usage => erl509_certificate_extension:create_key_usage_extension([
                     digitalSignature, keyCertSign, cRLSign
