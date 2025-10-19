@@ -34,7 +34,7 @@ create_self_signed(PrivateKey, Subject, Options) when
     Options2 = apply_default_options(Options),
     SerialNumber = create_serial_number(Options2),
 
-    SignatureAlgorithm = get_signature_algorithm(PrivateKey),
+    SignatureAlgorithm = get_signature_algorithm(PrivateKey, Options2),
     SubjectPub = erl509_private_key:derive_public_key(PrivateKey),
 
     % It's self-signed, so the issuer and subject are the same.
@@ -60,7 +60,7 @@ create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
     Options2 = apply_default_options(Options),
     SerialNumber = create_serial_number(Options2),
 
-    SignatureAlgorithm = get_signature_algorithm(IssuerKey),
+    SignatureAlgorithm = get_signature_algorithm(IssuerKey, Options2),
 
     SubjectRdn = erl509_rdn_seq:create(Subject),
 
@@ -112,7 +112,12 @@ create_certificate(
     from_der(public_key:pkix_sign(Certificate, IssuerKey)).
 
 apply_default_options(Options) ->
-    DefaultOptions = #{serial_number => random, validity => 365, extensions => #{}},
+    DefaultOptions = #{
+        serial_number => random,
+        validity => 365,
+        hash_algorithm => sha256,
+        extensions => #{}
+    },
     maps:merge(DefaultOptions, Options).
 
 create_serial_number(#{serial_number := random} = _Options) ->
@@ -130,12 +135,12 @@ create_validity(#{validity := ExpiryDays} = _Options) ->
         notAfter = NotAfter
     }.
 
-get_signature_algorithm(#'RSAPrivateKey'{}) ->
+get_signature_algorithm(#'RSAPrivateKey'{}, #{hash_algorithm := sha256}) ->
     #'SignatureAlgorithm'{
         algorithm = ?sha256WithRSAEncryption,
         parameters = {'asn1_OPENTYPE', ?DER_NULL}
     };
-get_signature_algorithm(#'ECPrivateKey'{}) ->
+get_signature_algorithm(#'ECPrivateKey'{}, #{hash_algorithm := sha256}) ->
     #'SignatureAlgorithm'{
         algorithm = ?'ecdsa-with-SHA256',
         parameters = asn1_NOVALUE
