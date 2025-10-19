@@ -3,6 +3,9 @@
     root_ca/0,
     root_ca/1,
 
+    ca/0,
+    ca/1,
+
     server/0,
     server/1,
 
@@ -29,6 +32,28 @@ root_ca() ->
 
 root_ca(Options) ->
     merge(root_ca(), Options).
+
+ca() ->
+    #{
+        validity => 5 * 365,
+        extensions =>
+            #{
+                basic_constraints => erl509_certificate_extension:create_basic_constraints_extension(
+                    true, 1
+                ),
+                key_usage => erl509_certificate_extension:create_key_usage_extension([
+                    digitalSignature, keyCertSign, cRLSign
+                ]),
+                ext_key_usage => erl509_certificate_extension:create_extended_key_usage_extension(
+                    [?'id-kp-serverAuth', ?'id-kp-clientAuth']
+                ),
+                subject_key_identifier => true,
+                authority_key_identifier => true
+            }
+    }.
+
+ca(Options) ->
+    merge(ca(), Options).
 
 server() ->
     #{
