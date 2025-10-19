@@ -29,6 +29,3 @@ import ExUnit.Assertions
 k = :erl509_private_key.create_ec(:secp256r1)
 assert :erl509_private_key.to_pem(k) == X509.PrivateKey.to_pem(k)
 ```
-
-Asserting certificates is trickier, because `x509` generates `OTPCertificate` objects and `erl509` currently generates
-`Certificate` objects.
