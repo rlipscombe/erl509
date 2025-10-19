@@ -22,7 +22,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
--type t() :: #'Certificate'{}.
+-type t() :: #'OTPCertificate'{}.
 
 -spec create_self_signed(
     PrivateKey :: erl509_private_key:t(), Subject :: binary(), Options :: map()
