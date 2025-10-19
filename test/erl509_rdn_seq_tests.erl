@@ -38,9 +38,10 @@ isrg_test() ->
                     {utf8String, <<"Not Internet Security Research Group">>}}
             ],
             [
-                {'AttributeTypeAndValue', ?'id-at-commonName',
-                    {utf8String, <<"Not ISRG Root X1">>}}
+                {'AttributeTypeAndValue', ?'id-at-commonName', {utf8String, <<"Not ISRG Root X1">>}}
             ]
         ]},
-        erl509_rdn_seq:create(<<"/C=US/O=Not Internet Security Research Group/CN=Not ISRG Root X1">>)
+        erl509_rdn_seq:create(
+            <<"/C=US/O=Not Internet Security Research Group/CN=Not ISRG Root X1">>
+        )
     ).

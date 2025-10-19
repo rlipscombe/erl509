@@ -48,7 +48,10 @@ self_signed_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS},
+        #'SignatureAlgorithm'{
+            algorithm = ?sha256WithRSAEncryption,
+            parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS
+        },
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{
@@ -204,7 +207,10 @@ server_rsa_test() ->
         Subject
     ),
     ?assertEqual(
-        #'SignatureAlgorithm'{algorithm = ?sha256WithRSAEncryption, parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS},
+        #'SignatureAlgorithm'{
+            algorithm = ?sha256WithRSAEncryption,
+            parameters = ?EXPECTED_SIGNATURE_ALGORITHM_PARAMETERS
+        },
         SignatureAlgorithm
     ),
     #'OTPSubjectPublicKeyInfo'{

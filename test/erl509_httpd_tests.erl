@@ -25,7 +25,7 @@ setup() ->
     Url = "https://localhost:" ++ integer_to_list(Port),
     #{pid => Pid, url => Url, cacert => CACert}.
 
-cleanup(#{ pid :=Pid}) ->
+cleanup(#{pid := Pid}) ->
     erl509_httpd:stop(Pid).
 
 get_https(#{url := Url, cacert := CACert}) ->

@@ -10,4 +10,4 @@
     {modules, []},
     {licenses, ["BSD-3-Clause"]},
     {links, []}
- ]}.
+]}.
