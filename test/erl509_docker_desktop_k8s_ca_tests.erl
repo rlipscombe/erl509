@@ -23,7 +23,7 @@ ca_test() ->
     ),
 
     % The certificate should be self-signed.
-    ?assert(pubkey_cert:is_self_signed(CACert)),
+    ?assert(public_key:pkix_is_self_signed(CACert)),
 
     % Certificate:
     #'OTPCertificate'{

@@ -14,7 +14,7 @@ self_signed_rsa_test() ->
     ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
     _DER = erl509_certificate:to_der(Certificate),
 
-    ?assert(pubkey_cert:is_self_signed(Certificate)),
+    ?assert(public_key:pkix_is_self_signed(Certificate)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{
@@ -71,7 +71,7 @@ self_signed_ec_test() ->
     PEM = erl509_certificate:to_pem(Certificate),
     ?assertEqual(Certificate, erl509_certificate:from_pem(PEM)),
 
-    ?assert(pubkey_cert:is_self_signed(Certificate)),
+    ?assert(public_key:pkix_is_self_signed(Certificate)),
 
     #'OTPCertificate'{
         tbsCertificate = #'OTPTBSCertificate'{

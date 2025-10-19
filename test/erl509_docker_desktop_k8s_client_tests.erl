@@ -44,7 +44,7 @@ client_test() ->
     ),
 
     % The certificate should NOT be self-signed.
-    ?assertNot(pubkey_cert:is_self_signed(ClientCert)),
+    ?assertNot(public_key:pkix_is_self_signed(ClientCert)),
 
     % Certificate:
     #'OTPCertificate'{

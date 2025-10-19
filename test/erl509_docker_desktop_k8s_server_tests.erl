@@ -59,7 +59,7 @@ server_test() ->
     ),
 
     % The certificate should NOT be self-signed.
-    ?assertNot(pubkey_cert:is_self_signed(ServerCert)),
+    ?assertNot(public_key:pkix_is_self_signed(ServerCert)),
 
     % Certificate:
     #'OTPCertificate'{
