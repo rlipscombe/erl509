@@ -123,15 +123,10 @@ create_serial_number(#{serial_number := random} = _Options) ->
 create_serial_number(#{serial_number := SerialNumber} = _Options) when is_integer(SerialNumber) ->
     SerialNumber.
 
-create_validity(#{validity := ExpiryDays} = _Options) ->
-    ExpirySeconds = ExpiryDays * 24 * 60 * 60,
-
-    NotBefore = erl509_time:encode_time(erlang:system_time(second)),
-    NotAfter = erl509_time:encode_time(erlang:system_time(second) + ExpirySeconds),
-    #'Validity'{
-        notBefore = NotBefore,
-        notAfter = NotAfter
-    }.
+create_validity(#{validity := ExpiryDays} = _Options) when is_integer(ExpiryDays) ->
+    erl509_certificate_validity:create(ExpiryDays);
+create_validity(#{validity := #'Validity'{} = V}) ->
+    V.
 
 get_signature_algorithm(#'RSAPrivateKey'{}, #{hash_algorithm := sha256}) ->
     #'SignatureAlgorithm'{
