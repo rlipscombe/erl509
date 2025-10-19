@@ -31,3 +31,9 @@ jobs:
       run: rebar3 compile
     - name: Run tests
       run: rebar3 do eunit --cover, cover, covertool generate
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2.20.0
+      if: (!cancelled())
+      with:
+        files: |
+          _build/test/surefire/*.xml
