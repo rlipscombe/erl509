@@ -46,6 +46,16 @@ client_test() ->
     % The certificate should NOT be self-signed.
     ?assertNot(public_key:pkix_is_self_signed(ClientCert)),
 
+    ?assert(public_key:pkix_is_issuer(ClientCert, CACert)),
+    ?assertMatch({ok, _}, public_key:pkix_path_validation(CACert, [ClientCert], [])),
+
+    ?assert(
+        public_key:pkix_verify(
+            erl509_certificate:to_der(ClientCert),
+            erl509_public_key:derive_public_key(CAPrivateKey)
+        )
+    ),
+
     % Certificate:
     #'OTPCertificate'{
         tbsCertificate = TbsCertificate,
