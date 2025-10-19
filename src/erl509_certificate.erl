@@ -197,6 +197,11 @@ create_authority_key_identifier_extension(#'OTPCertificate'{} = Issuer) ->
 create_authority_key_identifier_extension(Issuer) ->
     erl509_certificate_extension:create_authority_key_identifier_extension(Issuer).
 
+get_issuer_rdn(#'OTPCertificate'{tbsCertificate = TbsCertificate}) ->
+    get_issuer_rdn(TbsCertificate);
+get_issuer_rdn(#'OTPTBSCertificate'{subject = IssuerRdn}) ->
+    IssuerRdn.
+
 get_public_key(#'OTPCertificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
     get_public_key(TbsCertificate);
 get_public_key(#'OTPTBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
@@ -206,10 +211,6 @@ get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) -
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
     erl509_public_key:unwrap(SubjectPublicKeyInfo).
 
-get_issuer_rdn(#'OTPCertificate'{tbsCertificate = TbsCertificate}) ->
-    get_issuer_rdn(TbsCertificate);
-get_issuer_rdn(#'OTPTBSCertificate'{subject = IssuerRdn}) ->
-    IssuerRdn.
 
 get_extension(
     #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
