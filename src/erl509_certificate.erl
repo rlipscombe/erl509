@@ -221,12 +221,12 @@ get_validity(#'OTPCertificate'{
 
 get_extension(
     #'OTPCertificate'{tbsCertificate = #'OTPTBSCertificate'{extensions = Extensions}}, ExtnID
-) ->
+) when is_tuple(ExtnID) ->
     case lists:search(fun(#'Extension'{extnID = ID}) -> ID == ExtnID end, Extensions) of
         {value, Extension} -> Extension;
         false -> undefined
     end;
-get_extension(#'Certificate'{} = Certificate, ExtnID) ->
+get_extension(#'Certificate'{} = Certificate, ExtnID) when is_tuple(ExtnID) ->
     OTPCert = public_key:pkix_decode_cert(to_der(Certificate), otp),
     get_extension(OTPCert, ExtnID).
 
