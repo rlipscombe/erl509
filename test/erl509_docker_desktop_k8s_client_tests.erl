@@ -95,6 +95,9 @@ client_test() ->
     %     Not Before: Mar 20 13:16:25 2025 GMT
     %     Not After : Mar 20 13:16:25 2026 GMT
     {NotBefore, NotAfter} = parse_validity(Validity),
+
+    % Since we generated the certificate with a fixed period; it's relative to now. So we assert that, rather than the
+    % fixed validity in the original OpenSSL output above.
     ?assert(NotBefore =< erlang:system_time(second)),
     ?assertEqual(365 * 24 * 60 * 60, NotAfter - NotBefore),
 
