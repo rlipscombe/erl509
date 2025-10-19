@@ -73,7 +73,10 @@ client(Options) ->
 
 merge(DefaultOptions, ExtraOptions) ->
     maps:merge_with(
-        fun(extensions, Extensions1, Extensions2) -> maps:merge(Extensions1, Extensions2) end,
+        fun
+            (extensions, Extensions1, Extensions2) -> maps:merge(Extensions1, Extensions2);
+            (_Key, _, Value) -> Value
+        end,
         DefaultOptions,
         ExtraOptions
     ).
