@@ -34,8 +34,12 @@ encode_general_time_test() ->
 
 decode_utc_time_test_() ->
     [
+        % 2025-03-25T20:44:44Z
         ?_assertEqual(1742935484, erl509_time:decode_time({utcTime, <<"250325204444Z">>})),
-        ?_assertEqual(1742935484, erl509_time:decode_time({utcTime, "250325204444Z"}))
+        ?_assertEqual(1742935484, erl509_time:decode_time({utcTime, "250325204444Z"})),
+
+        % Fortunately, we have a time machine -- https://www.imdb.com/title/tt0096928/
+        ?_assertEqual(603676800, erl509_time:decode_time({utcTime, <<"890217000000Z">>}))
     ].
 
 decode_utc_time_latest_test() ->
