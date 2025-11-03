@@ -50,6 +50,8 @@ Certificate:
 
 ## Issuing a server certificate
 
+Note that `erl509` doesn't support certificate signing requests (CSRs) yet.
+
 ```erlang
 CAKey = erl509_private_key:create_rsa(2048).
 CACert = erl509_certificate:create_self_signed(
