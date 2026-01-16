@@ -57,6 +57,14 @@ create_self_signed(PrivateKey, Subject, Options) when
         Extensions
     ).
 
+-spec create(
+    SubjectPub :: erl509_public_key:t(),
+    Subject :: binary(),
+    IssuerCertificate :: erl509_certificate:t(),
+    IssuerKey :: erl509_private_key:t(),
+    Options :: map()
+) -> t().
+
 create(SubjectPub, Subject, IssuerCertificate, IssuerKey, Options) ->
     Options2 = apply_default_options(Options),
     SerialNumber = create_serial_number(Options2),
@@ -203,6 +211,11 @@ get_issuer_rdn(#'OTPCertificate'{tbsCertificate = TbsCertificate}) ->
 get_issuer_rdn(#'OTPTBSCertificate'{subject = IssuerRdn}) ->
     IssuerRdn.
 
+-spec get_public_key(
+    Certificate ::
+        #'OTPCertificate'{} | #'OTPTBSCertificate'{} | #'Certificate'{} | #'TBSCertificate'{}
+) -> erl509_public_key:t().
+
 get_public_key(#'OTPCertificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
     get_public_key(TbsCertificate);
 get_public_key(#'OTPTBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
@@ -212,11 +225,11 @@ get_public_key(#'Certificate'{tbsCertificate = TbsCertificate} = _Certificate) -
 get_public_key(#'TBSCertificate'{subjectPublicKeyInfo = SubjectPublicKeyInfo} = _TbsCertificate) ->
     erl509_public_key:unwrap(SubjectPublicKeyInfo).
 
-get_validity(#'OTPCertificate'{
-    tbsCertificate = #'OTPTBSCertificate'{
-        validity = Validity
-    }
-}) ->
+-spec get_validity(Certificate :: #'OTPCertificate'{} | #'OTPTBSCertificate'{}) -> #'Validity'{}.
+
+get_validity(#'OTPCertificate'{tbsCertificate = TbsCertificate} = _Certificate) ->
+    get_validity(TbsCertificate);
+get_validity(#'OTPTBSCertificate'{validity = Validity}) ->
     Validity.
 
 get_extension(
@@ -234,8 +247,13 @@ from_pem(Pem) when is_binary(Pem) ->
     [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
     from_der(Der).
 
+-spec to_pem(Certificate :: #'OTPCertificate'{} | #'Certificate'{}) -> binary().
+
 to_pem(Certificate) ->
-    public_key:pem_encode([{'Certificate', to_der(Certificate), not_encrypted}]).
+    Der = to_der(Certificate),
+    public_key:pem_encode([{'Certificate', Der, not_encrypted}]).
+
+-spec to_der(Certificate :: #'OTPCertificate'{} | #'Certificate'{}) -> public_key:der_encoded().
 
 to_der(#'OTPCertificate'{} = Certificate) ->
     public_key:pkix_encode('OTPCertificate', Certificate, otp);
