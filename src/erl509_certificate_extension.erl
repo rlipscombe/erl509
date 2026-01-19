@@ -18,6 +18,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
+-type t() :: #'Extension'{}.
+
 create_key_usage_extension(KeyUsage) ->
     #'Extension'{
         extnID = ?'id-ce-keyUsage',
@@ -25,8 +27,15 @@ create_key_usage_extension(KeyUsage) ->
         extnValue = KeyUsage
     }.
 
+-spec create_basic_constraints_extension(IsCA :: boolean()) -> t().
+
 create_basic_constraints_extension(IsCA) ->
     create_basic_constraints_extension(IsCA, asn1_NOVALUE).
+
+-spec create_basic_constraints_extension(
+    IsCA :: boolean(),
+    PathLenConstraint :: non_neg_integer() | asn1_NOVALUE
+) -> t().
 
 create_basic_constraints_extension(IsCA, PathLenConstraint) ->
     #'Extension'{
@@ -42,8 +51,8 @@ create_extended_key_usage_extension(ExtendedKeyUsages) when is_list(ExtendedKeyU
         extnValue = ExtendedKeyUsages
     }.
 
--spec create_subject_key_identifier_extension(SubjectPub :: erl509_public_key:t()) ->
-    #'Extension'{}.
+-spec create_subject_key_identifier_extension(SubjectPub :: erl509_public_key:t()) -> t().
+
 create_subject_key_identifier_extension(SubjectPub) ->
     % The subjectKeyIdentifier (and authorityKeyIdentifier) extensions are used (instead of the name) to build the
     % certificate path.
@@ -54,8 +63,8 @@ create_subject_key_identifier_extension(SubjectPub) ->
         extnValue = SubjectKeyIdentifier
     }.
 
--spec create_authority_key_identifier_extension(IssuerPub :: erl509_public_key:t()) ->
-    #'Extension'{}.
+-spec create_authority_key_identifier_extension(IssuerPub :: erl509_public_key:t()) -> t().
+
 create_authority_key_identifier_extension(IssuerPub) ->
     AuthorityKeyIdentifier = create_authority_key_identifier(IssuerPub),
     #'Extension'{
@@ -77,11 +86,13 @@ to_subject_alt_name({_, _} = Name) ->
     Name.
 
 -spec create_subject_key_identifier(erl509_public_key:t()) -> binary().
+
 create_subject_key_identifier(Key) ->
     create_key_identifier(Key).
 
 -spec create_authority_key_identifier(erl509_public_key:t() | binary()) ->
     #'AuthorityKeyIdentifier'{}.
+
 create_authority_key_identifier(AKI) when is_binary(AKI) ->
     #'AuthorityKeyIdentifier'{keyIdentifier = AKI};
 create_authority_key_identifier(Key) ->
@@ -97,20 +108,13 @@ create_key_identifier(Key) ->
     crypto:hash(sha, erl509_public_key:to_der(Key)).
 
 -ifdef(TEST).
-all_test_() ->
-    {setup,
-        fun() ->
-            PrivateKey = erl509_private_key:create_rsa(2048),
-            erl509_private_key:derive_public_key(PrivateKey)
-        end,
-        {with, [
-            fun basic_constraints_extension_is_ca/1,
-            fun basic_constraints_extension_is_not_ca/1,
-            fun subject_key_identifier/1,
-            fun authority_key_identifier/1
-        ]}}.
+basic_constraints_test_() ->
+    [
+        fun basic_constraints_extension_is_ca/0,
+        fun basic_constraints_extension_is_not_ca/0
+    ].
 
-basic_constraints_extension_is_ca(_) ->
+basic_constraints_extension_is_ca() ->
     ?assertEqual(
         #'Extension'{
             extnID = ?'id-ce-basicConstraints',
@@ -121,7 +125,7 @@ basic_constraints_extension_is_ca(_) ->
     ),
     ok.
 
-basic_constraints_extension_is_not_ca(_) ->
+basic_constraints_extension_is_not_ca() ->
     ?assertEqual(
         #'Extension'{
             extnID = ?'id-ce-basicConstraints',
@@ -132,7 +136,20 @@ basic_constraints_extension_is_not_ca(_) ->
     ),
     ok.
 
-subject_key_identifier(PublicKey) ->
+key_identifier_test_() ->
+    {setup,
+        fun() ->
+            PrivateKey = erl509_private_key:create_rsa(2048),
+            PublicKey = erl509_private_key:derive_public_key(PrivateKey),
+            #{private => PrivateKey, public => PublicKey}
+        end,
+
+        {with, [
+            fun subject_key_identifier_is_hash/1,
+            fun authority_key_identifier_is_aki_record/1
+        ]}}.
+
+subject_key_identifier_is_hash(#{public := PublicKey}) ->
     #'Extension'{
         extnID = ?'id-ce-subjectKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_subject_key_identifier_extension(PublicKey),
@@ -141,7 +158,7 @@ subject_key_identifier(PublicKey) ->
     ?assertEqual(Hash, Value),
     ok.
 
-authority_key_identifier(PublicKey) ->
+authority_key_identifier_is_aki_record(#{public := PublicKey}) ->
     #'Extension'{
         extnID = ?'id-ce-authorityKeyIdentifier', critical = false, extnValue = Value
     } = erl509_certificate_extension:create_authority_key_identifier_extension(PublicKey),
