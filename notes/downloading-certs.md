@@ -4,7 +4,7 @@ You might want to grab the certificate chain from a website, for comparing with 
 
 ```sh
 openssl s_client -connect serverfault.com:443 -showcerts </dev/null 2>/dev/null | \
-    gawk '/BEGIN/ {} /BEGIN/, /END/ { print }' | \
+    gawk '/BEGIN CERTIFICATE/, /END CERTIFICATE/ { print }' | \
     gawk 'BEGIN {n=1} x == 1 {n++; x=0} /END CERTIFICATE/ {x=1} {print > "cert" n ".pem"}'
 ```
 
