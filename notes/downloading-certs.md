@@ -3,7 +3,9 @@
 You might want to grab the certificate chain from a website, for comparing with erl509-generated certificates.
 
 ```sh
-openssl s_client -connect serverfault.com:443 -showcerts </dev/null 2>/dev/null | gawk '/BEGIN/ {} /BEGIN/, /END/ { print }' | gawk 'BEGIN {n=1} x == 1 {n++; x=0} /END CERTIFICATE/ {x=1} {print > "cert" n ".pem"}'
+openssl s_client -connect serverfault.com:443 -showcerts </dev/null 2>/dev/null | \
+    gawk '/BEGIN/ {} /BEGIN/, /END/ { print }' | \
+    gawk 'BEGIN {n=1} x == 1 {n++; x=0} /END CERTIFICATE/ {x=1} {print > "cert" n ".pem"}'
 ```
 
 It doesn't show the root certificate, because that's not in the chain -- you should have a copy in your local trust
