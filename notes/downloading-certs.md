@@ -25,5 +25,6 @@ A .PEM file containing the entire certificate chain, including the root, will be
 To split it into separate PEM files, use the following, for example:
 
 ```sh
-cat ~/Downloads/serverfault-com-chain.pem | gawk 'BEGIN {n=1} x == 1 {n++; x=0} /END CERTIFICATE/ {x=1} {print > "serverfault-com-cert-" n ".pem"}'
+cat ~/Downloads/serverfault-com-chain.pem | \
+    gawk 'BEGIN {n=1} x == 1 {n++; x=0} /END CERTIFICATE/ {x=1} {print > "serverfault-com-cert-" n ".pem"}'
 ```
