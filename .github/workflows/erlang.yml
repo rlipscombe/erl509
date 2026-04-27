@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         erlang:
-          - "27.3.4"
-          - "28.1"
+          - "27.3.4.11"
+          - "28.5"
 
     runs-on: ubuntu-latest
     container:
