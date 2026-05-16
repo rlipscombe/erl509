@@ -59,8 +59,15 @@ CACert = erl509_certificate:create_self_signed(
 
 ServerKey = erl509_private_key:create_rsa(2048).
 ServerPub = erl509_public_key:derive_public_key(ServerKey).
+ServerTemplate = erl509_certificate_template:server(#{
+    extensions => #{
+        subject_alt_name => erl509_certificate_extension:create_subject_alt_name_extension([
+            <<"example.org">>, <<"www.example.org">>
+        ])
+    }
+}).
 ServerCert = erl509_certificate:create(
-    ServerPub, <<"CN=server">>, CACert, CAKey, erl509_certificate_template:server()).
+    ServerPub, <<"CN=server">>, CACert, CAKey, ServerTemplate).
 ServerPEM = erl509_certificate:to_pem(ServerCert).
 ok = file:write_file("server.crt", ServerPEM).
 ```
