@@ -36,6 +36,13 @@ main(Args) ->
                 ]
             },
 
+            "create-key" => #{
+                handler => fun create_key/1,
+                arguments => [
+                    #{name => out_key, long => "-out-key", required => true}
+                ]
+            },
+
             "create-csr" => #{
                 handler => fun create_csr/1,
                 arguments => [
@@ -78,12 +85,22 @@ create_cert(
     Certificate = erl509_certificate:create(
         PublicKey, Subject, IssuerCertificate, IssuerKey, Options
     ),
-    ok = file:write_file(OutCert, erl509_certificate:to_pem(Certificate)).
+    ok = file:write_file(OutCertFile, erl509_certificate:to_pem(Certificate)).
 
 get_certificate_options(#{template := root_ca}) ->
     erl509_certificate_template:root_ca();
 get_certificate_options(#{template := server}) ->
     erl509_certificate_template:server().
+
+create_key(
+    _Args = #{
+        out_key := OutKeyFile
+    }
+) ->
+    ModulusSize = 2048,
+    Opts = [wrap],
+    PrivateKey = erl509_private_key:create_rsa(ModulusSize),
+    ok = file:write_file(OutKeyFile, erl509_private_key:to_pem(PrivateKey, Opts)).
 
 create_csr(
     _Args = #{
