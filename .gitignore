@@ -22,4 +22,5 @@ rebar3.crashdump
 *.key
 *.pub
 *.pem
+*.csr
 .direnv/
