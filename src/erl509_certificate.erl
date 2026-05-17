@@ -243,15 +243,15 @@ get_extension(#'Certificate'{} = Certificate, ExtnID) when is_tuple(ExtnID) ->
     OTPCert = public_key:pkix_decode_cert(to_der(Certificate), otp),
     get_extension(OTPCert, ExtnID).
 
-from_pem(Pem) when is_binary(Pem) ->
-    [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
-    from_der(Der).
-
 -spec to_pem(Certificate :: #'OTPCertificate'{} | #'Certificate'{}) -> binary().
 
 to_pem(Certificate) ->
     Der = to_der(Certificate),
     public_key:pem_encode([{'Certificate', Der, not_encrypted}]).
+
+from_pem(Pem) when is_binary(Pem) ->
+    [{'Certificate', Der, not_encrypted}] = public_key:pem_decode(Pem),
+    from_der(Der).
 
 -spec to_der(Certificate :: #'OTPCertificate'{} | #'Certificate'{}) -> public_key:der_encoded().
 

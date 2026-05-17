@@ -34,6 +34,15 @@ main(Args) ->
                     },
                     #{name => subject, long => "-subject", required => true, type => binary}
                 ]
+            },
+
+            "create-csr" => #{
+                handler => fun create_csr/1,
+                arguments => [
+                    #{name => subject_key, long => "-subject-key", required => true},
+                    #{name => subject, long => "-subject", required => true, type => binary},
+                    #{name => out_csr, long => "-out-csr", required => true}
+                ]
             }
         }
     },
@@ -75,3 +84,16 @@ get_certificate_options(#{template := root_ca}) ->
     erl509_certificate_template:root_ca();
 get_certificate_options(#{template := server}) ->
     erl509_certificate_template:server().
+
+create_csr(
+    _Args = #{
+        subject_key := SubjectKeyFile,
+        out_csr := OutCsr,
+        subject := Subject
+    }
+) ->
+    {ok, SubjectKeyPem} = file:read_file(SubjectKeyFile),
+    SubjectPrivateKey = erl509_private_key:from_pem(SubjectKeyPem),
+
+    CertificationRequest = erl509_csr:create_csr(SubjectPrivateKey, Subject),
+    ok = file:write_file(OutCsr, erl509_csr:to_pem(CertificationRequest)).

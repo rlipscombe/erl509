@@ -3,6 +3,7 @@
     derive_public_key/1,
 
     wrap/1,
+    wrap/2,
     unwrap/1,
 
     to_pem/1,
@@ -56,7 +57,10 @@ to_der(PublicKey, Opts) ->
 der_encode(#'SubjectPublicKeyInfo'{} = SubjectPublicKeyInfo) ->
     public_key:der_encode('SubjectPublicKeyInfo', SubjectPublicKeyInfo).
 
-wrap(#'RSAPublicKey'{} = RSAPublicKey) ->
+wrap(PublicKey) ->
+        wrap(PublicKey, 'SubjectPublicKeyInfo').
+
+wrap(#'RSAPublicKey'{} = RSAPublicKey, 'SubjectPublicKeyInfo') ->
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
             algorithm = ?'rsaEncryption',
@@ -64,9 +68,25 @@ wrap(#'RSAPublicKey'{} = RSAPublicKey) ->
         },
         subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
     };
-wrap({#'ECPoint'{point = Point}, Parameters}) ->
+wrap({#'ECPoint'{point = Point}, Parameters}, 'SubjectPublicKeyInfo') ->
     #'SubjectPublicKeyInfo'{
         algorithm = #'AlgorithmIdentifier'{
+            algorithm = ?'id-ecPublicKey',
+            parameters = maybe_encode_parameters(Parameters)
+        },
+        subjectPublicKey = Point
+    };
+wrap(#'RSAPublicKey'{} = RSAPublicKey, 'CertificationRequestInfo_subjectPKInfo') ->
+    #'CertificationRequestInfo_subjectPKInfo'{
+        algorithm = #'CertificationRequestInfo_subjectPKInfo_algorithm'{
+            algorithm = ?'rsaEncryption',
+            parameters = {'asn1_OPENTYPE', ?DER_NULL}
+        },
+        subjectPublicKey = public_key:der_encode('RSAPublicKey', RSAPublicKey)
+    };
+wrap({#'ECPoint'{point = Point}, Parameters}, 'CertificationRequestInfo_subjectPKInfo') ->
+    #'CertificationRequestInfo_subjectPKInfo'{
+        algorithm = #'CertificationRequestInfo_subjectPKInfo_algorithm'{
             algorithm = ?'id-ecPublicKey',
             parameters = maybe_encode_parameters(Parameters)
         },
