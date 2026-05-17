@@ -55,7 +55,13 @@ main(Args) ->
     },
     argparse:run(Args, Command, #{progname => erl509}).
 
-self_signed(Args = #{out_cert := OutCert, out_key := OutKey, subject := Subject}) ->
+self_signed(
+    Args = #{
+        out_cert := OutCert,
+        out_key := OutKey,
+        subject := Subject
+    }
+) ->
     PrivateKey = erl509_private_key:create_rsa(2048),
     ok = file:write_file(OutKey, erl509_private_key:to_pem(PrivateKey)),
     Options = get_certificate_options(Args),
@@ -66,14 +72,15 @@ create_cert(
     Args = #{
         issuer_cert := IssuerCertFile,
         issuer_key := IssuerKeyFile,
-        out_cert := OutCert,
-        out_key := OutKey,
+        out_cert := OutCertFile,
+        out_key := OutKeyFile,
         subject := Subject
     }
 ) ->
-    PrivateKey = erl509_private_key:create_rsa(2048),
+    ModulusSize = 2048,
+    PrivateKey = erl509_private_key:create_rsa(ModulusSize),
     PublicKey = erl509_public_key:derive_public_key(PrivateKey),
-    ok = file:write_file(OutKey, erl509_private_key:to_pem(PrivateKey)),
+    ok = file:write_file(OutKeyFile, erl509_private_key:to_pem(PrivateKey)),
 
     {ok, IssuerCertPem} = file:read_file(IssuerCertFile),
     IssuerCertificate = erl509_certificate:from_pem(IssuerCertPem),
