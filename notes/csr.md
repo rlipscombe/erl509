@@ -73,7 +73,7 @@ Certificate Request:
 rr(public_key).
 
 {ok, PEM} = file:read_file("server.csr").
-[{'CertficationRequest', DER, not_encrypted}] = public_key:pem_decode(PEM).
+[{'CertificationRequest', DER, not_encrypted}] = public_key:pem_decode(PEM).
 public_key:der_decode('CertificationRequest', DER).
 ```
 

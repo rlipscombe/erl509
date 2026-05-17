@@ -9,7 +9,7 @@
 ]).
 
 -include_lib("public_key/include/public_key.hrl").
-% -define(DER_NULL, <<5, 0>>).
+-define(DER_NULL, <<5, 0>>).
 
 -type t() :: #'CertificationRequest'{}.
 
@@ -37,7 +37,10 @@ create_csr(SubjectPrivateKey, Subject) ->
     Signature = public_key:sign(Der, HashAlgorithm, SubjectPrivateKey),
     #'CertificationRequest'{
         certificationRequestInfo = CertificationRequestInfo,
-        signatureAlgorithm = #'CertificationRequest_signatureAlgorithm'{},
+        signatureAlgorithm = #'CertificationRequest_signatureAlgorithm'{
+            algorithm = ?'rsaEncryption',
+            parameters = {'asn1_OPENTYPE', ?DER_NULL}
+        },
         signature = Signature
     }.
 
