@@ -4,6 +4,7 @@
 ]).
 -export([
     to_pem/1,
+    from_pem/1,
 
     to_der/1
 ]).
@@ -12,6 +13,8 @@
 -define(DER_NULL, <<5, 0>>).
 
 -type t() :: #'CertificationRequest'{}.
+-type pem_encoded() :: binary().
+-type der_encoded() :: binary().
 
 -spec create_csr(
     SubjectPrivateKey :: erl509_private_key:t(), Subject :: binary()
@@ -38,7 +41,7 @@ create_csr(SubjectPrivateKey, Subject) ->
     #'CertificationRequest'{
         certificationRequestInfo = CertificationRequestInfo,
         signatureAlgorithm = #'CertificationRequest_signatureAlgorithm'{
-            algorithm = ?'rsaEncryption',
+            algorithm = ?'sha256WithRSAEncryption',
             parameters = {'asn1_OPENTYPE', ?DER_NULL}
         },
         signature = Signature
@@ -50,7 +53,13 @@ to_pem(CertificationRequest) ->
     Der = to_der(CertificationRequest),
     public_key:pem_encode([{'CertificationRequest', Der, not_encrypted}]).
 
--spec to_der(CertificationRequest :: t()) -> public_key:der_encoded().
+-spec from_pem(Pem :: pem_encoded()) -> t().
+
+from_pem(Pem) when is_binary(Pem) ->
+    [{'CertificationRequest', Der, not_encrypted}] = public_key:pem_decode(Pem),
+    public_key:der_decode('CertificationRequest', Der).
+
+-spec to_der(CertificationRequest :: t()) -> der_encoded().
 
 to_der(CertificationRequest) ->
     public_key:der_encode('CertificationRequest', CertificationRequest).

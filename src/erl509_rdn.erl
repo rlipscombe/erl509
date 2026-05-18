@@ -4,6 +4,7 @@
 -include_lib("public_key/include/public_key.hrl").
 
 create_rdn(Value) when is_binary(Value) ->
+    % TODO: Why list_to_tuple?
     create_rdn_attr(list_to_tuple(string:split(Value, <<"=">>)));
 create_rdn(Value) when is_list(Value) ->
     create_rdn(list_to_binary(Value)).

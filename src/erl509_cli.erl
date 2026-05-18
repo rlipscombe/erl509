@@ -36,6 +36,8 @@ main(Args) ->
                 ]
             },
 
+            % TODO: Signing the CSR to create a certificate.
+
             "create-key" => #{
                 handler => fun create_key/1,
                 arguments => [
